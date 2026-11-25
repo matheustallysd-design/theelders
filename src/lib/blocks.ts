@@ -6,13 +6,13 @@ export type BlockKind = "text" | "image" | "video" | "sfx" | "quote";
 export type Block = {
   id: string; kind: BlockKind; content: string; src: string | null;
   pos: string; zoom: number; align: "left" | "center" | "right";
-  bold: boolean; italic: boolean; size: "sm" | "md" | "lg";
+  bold: boolean; italic: boolean; size: "sm" | "md" | "lg"; width: number;
 };
 
 let n = 0;
 export const newId = () => `tmp-${Date.now().toString(36)}-${(n++).toString(36)}`;
 export const mk = (p: Partial<Block> & { kind: BlockKind }): Block => ({
-  id: newId(), content: "", src: null, pos: "50% 50%", zoom: 100, align: "left", bold: false, italic: false, size: "md", ...p,
+  id: newId(), content: "", src: null, pos: "50% 50%", zoom: 100, align: "left", bold: false, italic: false, size: "md", width: 100, ...p,
 });
 
 const sfxList = ["ZAN!", "DOOM...", "KRAK!", "GRRRAAH!", "SLASH!", "THUD!", "SSSSS...", "VRUUM!", "..."];

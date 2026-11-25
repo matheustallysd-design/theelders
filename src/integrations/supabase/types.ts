@@ -28,6 +28,7 @@ export type Database = {
           size: string
           src: string | null
           updated_at: string
+          width: number
           zoom: number
         }
         Insert: {
@@ -43,6 +44,7 @@ export type Database = {
           size?: string
           src?: string | null
           updated_at?: string
+          width?: number
           zoom?: number
         }
         Update: {
@@ -58,6 +60,7 @@ export type Database = {
           size?: string
           src?: string | null
           updated_at?: string
+          width?: number
           zoom?: number
         }
         Relationships: []
