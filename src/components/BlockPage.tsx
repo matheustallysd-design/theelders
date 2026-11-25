@@ -21,7 +21,7 @@ function useReveal() {
 async function fetchBlocks(page: string): Promise<Block[] | null> {
   const { data, error } = await supabase.from("content_blocks").select("*").eq("page", page).order("position");
   if (error || !data?.length) return null;
-  return data.map((r) => ({ id: r.id, kind: r.kind as Block["kind"], content: r.content, src: r.src, pos: r.pos, zoom: r.zoom, align: r.align as Block["align"], bold: r.bold, italic: r.italic, size: r.size as Block["size"] }));
+  return data.map((r) => ({ id: r.id, kind: r.kind as Block["kind"], content: r.content, src: r.src, pos: r.pos, zoom: r.zoom, align: r.align as Block["align"], bold: r.bold, italic: r.italic, size: r.size as Block["size"], width: r.width ?? 100 }));
 }
 
 export function BlockPage({ page, defaults, className }: { page: string; defaults: () => Block[]; className?: string }) {
@@ -55,7 +55,7 @@ export function BlockPage({ page, defaults, className }: { page: string; default
 
   const save = async () => {
     setSaving(true);
-    const rows = blocks.map((b, i) => ({ page, position: i, kind: b.kind, content: b.content, src: b.src, pos: b.pos, zoom: b.zoom, align: b.align, bold: b.bold, italic: b.italic, size: b.size }));
+    const rows = blocks.map((b, i) => ({ page, position: i, kind: b.kind, content: b.content, src: b.src, pos: b.pos, zoom: b.zoom, align: b.align, bold: b.bold, italic: b.italic, size: b.size, width: b.width }));
     const del = await supabase.from("content_blocks").delete().eq("page", page);
     const ins = del.error ? del : await supabase.from("content_blocks").insert(rows);
     setSaving(false);
