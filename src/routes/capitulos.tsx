@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight, Bookmark } from "lucide-react";
 import { chapter } from "@/content/story";
+import { sceneArt } from "@/content/media";
 
 export const Route = createFileRoute("/capitulos")({
   head: () => ({
@@ -39,6 +40,7 @@ function Reader() {
 
   const go = (n: number) => { setSection(n); window.scrollTo({ top: 0, behavior: "smooth" }); };
   const current = chapter.sections[section] ?? chapter.sections[0]!;
+  const art = sceneArt[section];
   const progress = Math.round(((section + 1) / total) * 100);
   const last = section === total - 1;
 
@@ -51,6 +53,14 @@ function Reader() {
       </div>
       <div className="reader-heading"><div className="section-kicker">{chapter.number}</div><h1>{chapter.title}</h1><p>{chapter.subtitle}</p></div>
       <div className="progress-wrap"><div className="progress-label"><span>PROGRESSO DO CAPÍTULO</span><span>{progress}%</span></div><div className="progress-track"><div style={{ width: `${progress}%` }} /></div></div>
+      {art && (
+        <figure className="mg-panel mg-scene">
+          {art.video
+            ? <video key={art.src} src={art.src} autoPlay muted loop playsInline />
+            : <div className="mg-scene-img" style={{ backgroundImage: `url(${art.src})`, backgroundPosition: art.pos, backgroundSize: art.zoom ?? "cover" }} />}
+          <figcaption className="mg-caption">{art.caption}</figcaption>
+        </figure>
+      )}
       <article className="story-panel">
         <div className="story-section-label"><span>✦</span> {current.heading.toUpperCase()}</div>
         {current.text.split("\n\n").map((p, i) => {

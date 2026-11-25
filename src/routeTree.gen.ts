@@ -12,7 +12,10 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CapitulosRouteImport } from './routes/capitulos'
 import { Route as MundoRouteImport } from './routes/mundo'
-import { Route as PersonagensRouteImport } from './routes/personagens'
+import { Route as BestiarioIndexRouteImport } from './routes/bestiario.index'
+import { Route as BestiarioSlugRouteImport } from './routes/bestiario.$slug'
+import { Route as PersonagensIndexRouteImport } from './routes/personagens.index'
+import { Route as PersonagensSlugRouteImport } from './routes/personagens.$slug'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -29,9 +32,24 @@ const MundoRoute = MundoRouteImport.update({
   path: '/mundo',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PersonagensRoute = PersonagensRouteImport.update({
-  id: '/personagens',
-  path: '/personagens',
+const BestiarioIndexRoute = BestiarioIndexRouteImport.update({
+  id: '/bestiario/',
+  path: '/bestiario/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BestiarioSlugRoute = BestiarioSlugRouteImport.update({
+  id: '/bestiario/$slug',
+  path: '/bestiario/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PersonagensIndexRoute = PersonagensIndexRouteImport.update({
+  id: '/personagens/',
+  path: '/personagens/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PersonagensSlugRoute = PersonagensSlugRouteImport.update({
+  id: '/personagens/$slug',
+  path: '/personagens/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -39,34 +57,68 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/capitulos': typeof CapitulosRoute
   '/mundo': typeof MundoRoute
-  '/personagens': typeof PersonagensRoute
+  '/bestiario/$slug': typeof BestiarioSlugRoute
+  '/personagens/$slug': typeof PersonagensSlugRoute
+  '/bestiario/': typeof BestiarioIndexRoute
+  '/personagens/': typeof PersonagensIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/capitulos': typeof CapitulosRoute
   '/mundo': typeof MundoRoute
-  '/personagens': typeof PersonagensRoute
+  '/bestiario/$slug': typeof BestiarioSlugRoute
+  '/personagens/$slug': typeof PersonagensSlugRoute
+  '/bestiario': typeof BestiarioIndexRoute
+  '/personagens': typeof PersonagensIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/capitulos': typeof CapitulosRoute
   '/mundo': typeof MundoRoute
-  '/personagens': typeof PersonagensRoute
+  '/bestiario/$slug': typeof BestiarioSlugRoute
+  '/personagens/$slug': typeof PersonagensSlugRoute
+  '/bestiario/': typeof BestiarioIndexRoute
+  '/personagens/': typeof PersonagensIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/capitulos' | '/mundo' | '/personagens'
+  fullPaths:
+    | '/'
+    | '/capitulos'
+    | '/mundo'
+    | '/bestiario/$slug'
+    | '/personagens/$slug'
+    | '/bestiario/'
+    | '/personagens/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/capitulos' | '/mundo' | '/personagens'
-  id: '__root__' | '/' | '/capitulos' | '/mundo' | '/personagens'
+  to:
+    | '/'
+    | '/capitulos'
+    | '/mundo'
+    | '/bestiario/$slug'
+    | '/personagens/$slug'
+    | '/bestiario'
+    | '/personagens'
+  id:
+    | '__root__'
+    | '/'
+    | '/capitulos'
+    | '/mundo'
+    | '/bestiario/$slug'
+    | '/personagens/$slug'
+    | '/bestiario/'
+    | '/personagens/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CapitulosRoute: typeof CapitulosRoute
   MundoRoute: typeof MundoRoute
-  PersonagensRoute: typeof PersonagensRoute
+  BestiarioSlugRoute: typeof BestiarioSlugRoute
+  PersonagensSlugRoute: typeof PersonagensSlugRoute
+  BestiarioIndexRoute: typeof BestiarioIndexRoute
+  PersonagensIndexRoute: typeof PersonagensIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -92,11 +144,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MundoRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/personagens': {
-      id: '/personagens'
+    '/bestiario/': {
+      id: '/bestiario/'
+      path: '/bestiario'
+      fullPath: '/bestiario/'
+      preLoaderRoute: typeof BestiarioIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bestiario/$slug': {
+      id: '/bestiario/$slug'
+      path: '/bestiario/$slug'
+      fullPath: '/bestiario/$slug'
+      preLoaderRoute: typeof BestiarioSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/personagens/': {
+      id: '/personagens/'
       path: '/personagens'
-      fullPath: '/personagens'
-      preLoaderRoute: typeof PersonagensRouteImport
+      fullPath: '/personagens/'
+      preLoaderRoute: typeof PersonagensIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/personagens/$slug': {
+      id: '/personagens/$slug'
+      path: '/personagens/$slug'
+      fullPath: '/personagens/$slug'
+      preLoaderRoute: typeof PersonagensSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -106,7 +179,10 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CapitulosRoute: CapitulosRoute,
   MundoRoute: MundoRoute,
-  PersonagensRoute: PersonagensRoute,
+  BestiarioSlugRoute: BestiarioSlugRoute,
+  PersonagensSlugRoute: PersonagensSlugRoute,
+  BestiarioIndexRoute: BestiarioIndexRoute,
+  PersonagensIndexRoute: PersonagensIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

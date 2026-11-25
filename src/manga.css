@@ -1,0 +1,78 @@
+/* THE ELDER — camada de estilo mangá: quadros de tinta, cores vibrantes e onomatopeias */
+:root{--ink:oklch(0.13 0.01 280);--paper:oklch(0.95 0.015 85);--blood:oklch(0.62 0.23 22);--arcane:oklch(0.82 0.14 200);--gold:oklch(0.78 0.12 80);--muted:oklch(0.7 0.02 80);--line:color-mix(in oklab,var(--gold) 30%,transparent);--glow-blood:0 0 30px color-mix(in oklab,var(--blood) 55%,transparent);--glow-arcane:0 0 30px color-mix(in oklab,var(--arcane) 50%,transparent)}
+.app-shell{background:radial-gradient(ellipse at 20% 0%,color-mix(in oklab,var(--blood) 22%,var(--ink)) 0%,var(--ink) 45%),radial-gradient(ellipse at 90% 60%,color-mix(in oklab,var(--arcane) 14%,transparent),transparent 50%);background-blend-mode:screen}
+.topbar{background:color-mix(in oklab,var(--ink) 92%,transparent);border-bottom:3px solid var(--blood);position:sticky;top:0;backdrop-filter:blur(8px)}
+.brand-mark{border-color:var(--blood);color:var(--blood);box-shadow:var(--glow-blood)}
+.section-kicker{color:var(--arcane)!important}
+.primary-btn{background:var(--blood)!important;color:var(--paper)!important;border:2px solid var(--ink)!important;box-shadow:4px 4px 0 var(--ink),var(--glow-blood);transform:skew(-6deg)}
+.primary-btn:hover{background:var(--gold)!important;color:var(--ink)!important}
+.mg-ghost-btn{display:inline-flex;align-items:center;gap:8px;padding:14px 20px;border:2px solid var(--arcane);color:var(--arcane);text-decoration:none;font-size:11px;letter-spacing:2px;transform:skew(-6deg);box-shadow:var(--glow-arcane)}
+.mg-panel{display:block;position:relative;overflow:hidden;border:4px solid var(--paper);outline:3px solid var(--ink);background:var(--ink);box-shadow:8px 8px 0 var(--blood)}
+.mg-sfx{position:absolute;font-family:Bangers,Impact,sans-serif;font-size:clamp(34px,5vw,64px);color:var(--gold);-webkit-text-stroke:2px var(--ink);text-shadow:4px 4px 0 var(--blood);transform:rotate(-10deg);top:14px;right:18px;z-index:3;pointer-events:none;letter-spacing:2px}
+.mg-caption{position:absolute;left:14px;bottom:14px;right:14px;z-index:3;background:var(--paper);color:var(--ink);border:2px solid var(--ink);padding:10px 14px;font-size:13px;line-height:1.4;max-width:340px}
+.mg-caption b{display:block;font-family:Bangers,sans-serif;font-size:22px;letter-spacing:1px;color:var(--blood)}
+.mg-bubble{background:var(--paper);color:var(--ink);border:3px solid var(--ink);border-radius:28px;padding:22px 30px;font-family:Cinzel,serif;font-size:clamp(18px,2.4vw,28px);position:relative;box-shadow:6px 6px 0 var(--arcane);margin:0}
+.mg-bubble em{color:var(--blood);font-style:normal}
+.mg-tag{display:inline-block;background:var(--arcane);color:var(--ink);font-size:10px;letter-spacing:2px;font-weight:600;padding:4px 10px;transform:skew(-8deg)}
+
+.mg-hero{position:relative;min-height:calc(100vh - 82px);display:flex;align-items:center;padding:60px clamp(20px,7vw,120px);overflow:hidden;border-bottom:4px solid var(--blood)}
+.mg-hero-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:saturate(1.3) contrast(1.1)}
+.mg-hero-shade{position:absolute;inset:0;background:linear-gradient(90deg,var(--ink) 15%,color-mix(in oklab,var(--ink) 40%,transparent) 55%,color-mix(in oklab,var(--blood) 25%,transparent))}
+.mg-hero-content{position:relative;z-index:2;max-width:560px}
+.mg-hero-content h1{font-family:Cinzel,serif;font-size:clamp(64px,11vw,150px);line-height:.85;margin:20px 0;color:var(--paper);text-shadow:6px 6px 0 var(--blood)}
+.mg-hero-content h1 em{color:var(--gold);font-style:normal}
+.mg-hero-cover{position:relative;z-index:2;margin-left:auto;width:min(340px,30vw);border:5px solid var(--paper);outline:3px solid var(--ink);box-shadow:12px 12px 0 var(--blood),var(--glow-arcane);transform:rotate(3deg)}
+.mg-sfx-hero{top:auto;bottom:40px;right:auto;left:45%;font-size:clamp(50px,8vw,110px)}
+
+.mg-strip,.mg-split{padding:90px clamp(20px,7vw,120px)}
+.mg-strip-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:22px;margin-top:28px}
+.mg-strip-panel{height:420px;background-size:320%;transition:transform .3s}
+.mg-strip-panel:nth-child(1){clip-path:polygon(0 0,100% 0,94% 100%,0 100%)}
+.mg-strip-panel:nth-child(2){clip-path:polygon(6% 0,100% 0,94% 100%,0 100%);box-shadow:8px 8px 0 var(--arcane)}
+.mg-strip-panel:nth-child(3){clip-path:polygon(6% 0,100% 0,100% 100%,0 100%)}
+.mg-strip-panel:hover{transform:translateY(-6px) rotate(-1deg)}
+.mg-split{display:grid;grid-template-columns:1.1fr 1fr;gap:60px;align-items:center}
+.mg-split-art{box-shadow:10px 10px 0 var(--arcane)}
+.mg-split-art img{width:100%;display:block}
+.mg-split-text h2{font-family:Cinzel,serif;font-size:clamp(28px,3.4vw,46px);color:var(--paper);margin:14px 0}
+.mg-split-text h2 em{color:var(--arcane);font-style:normal}
+.mg-split-text p{color:var(--muted);line-height:1.8;margin-bottom:28px}
+.mg-split-text strong{color:var(--gold)}
+.mg-quote{position:relative;min-height:520px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;overflow:hidden;border-top:4px solid var(--arcane);border-bottom:4px solid var(--blood)}
+.mg-quote video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.mg-quote-shade{position:absolute;inset:0;background:color-mix(in oklab,var(--ink) 55%,transparent)}
+.mg-quote .mg-bubble,.mg-quote small{position:relative;z-index:2}
+.mg-quote small{color:var(--gold);letter-spacing:3px}
+
+.mg-scene{max-width:900px;margin:0 auto 40px;height:min(480px,60vw);transform:rotate(-.6deg)}
+.mg-scene video,.mg-scene-img{width:100%;height:100%;object-fit:cover;display:block}
+
+.mg-page{position:relative}
+.mg-page::before{content:"";position:absolute;inset:0 0 auto 0;height:520px;background:var(--page-art) center 20%/cover;opacity:.22;mask-image:linear-gradient(var(--ink),transparent);pointer-events:none;z-index:0}
+.mg-page>*{position:relative;z-index:1}
+.mg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:32px;margin-top:40px}
+.mg-card{display:flex;flex-direction:column;text-decoration:none;color:inherit;background:var(--ink);border:3px solid var(--paper);box-shadow:8px 8px 0 var(--blood);transition:transform .25s,box-shadow .25s}
+.mg-card:nth-child(even){box-shadow:8px 8px 0 var(--arcane)}
+.mg-card:hover{transform:translate(-4px,-4px) rotate(-1deg);box-shadow:14px 14px 0 var(--gold)}
+.mg-card-art{height:320px;background-size:380%;border-bottom:3px solid var(--paper);filter:contrast(1.1)}
+.mg-card-body{padding:22px}
+.mg-card-body h2{font-family:Cinzel,serif;font-size:26px;margin:12px 0 8px;color:var(--paper)}
+.mg-card-body p{color:var(--muted);font-size:14px;line-height:1.7}
+.mg-card-body small{color:var(--blood);font-size:10px;letter-spacing:1.5px}
+.mg-archive{background-size:cover;background-position:center;position:relative;border:3px solid var(--paper)!important;box-shadow:6px 6px 0 var(--blood)}
+.mg-archive::before{content:"";position:absolute;inset:0;background:linear-gradient(color-mix(in oklab,var(--ink) 60%,transparent),var(--ink) 75%)}
+.mg-archive>*{position:relative}
+
+.mg-detail-hero{min-height:70vh;background-size:cover;position:relative;display:flex;align-items:flex-end;padding:60px clamp(20px,7vw,120px);border-bottom:4px solid var(--blood)}
+.mg-detail-shade{position:absolute;inset:0;background:linear-gradient(transparent 20%,var(--ink) 92%),linear-gradient(90deg,color-mix(in oklab,var(--blood) 30%,transparent),transparent 60%)}
+.mg-detail-text{position:relative;max-width:700px;display:flex;flex-direction:column;gap:16px;align-items:flex-start}
+.mg-detail-text h1{font-family:Cinzel,serif;font-size:clamp(44px,7vw,96px);margin:0;color:var(--paper);text-shadow:5px 5px 0 var(--blood);line-height:1}
+.mg-detail-info{display:grid;grid-template-columns:1.3fr 1fr;gap:50px;padding:60px clamp(20px,7vw,120px)}
+.mg-lead{font-size:18px;line-height:1.8;color:var(--paper)}
+.mg-status{color:var(--blood);letter-spacing:2px;font-size:11px}
+.mg-size{color:var(--arcane);letter-spacing:2px;font-size:12px;margin-top:14px}
+.mg-facts{list-style:none;padding:0;margin:0;display:grid;gap:12px}
+.mg-facts li{border-left:4px solid var(--arcane);background:color-mix(in oklab,var(--paper) 6%,transparent);padding:12px 16px;color:var(--paper)}
+.mg-sheets{padding:0 clamp(20px,7vw,120px) 90px;display:grid;gap:36px}
+.mg-sheets img{width:100%;display:block}
+@media(max-width:860px){.mg-hero{flex-direction:column;align-items:flex-start;gap:40px}.mg-hero-cover{width:60vw;margin:0 auto}.mg-strip-grid,.mg-split,.mg-detail-info{grid-template-columns:1fr}.mg-strip-panel{clip-path:none!important;height:320px}}

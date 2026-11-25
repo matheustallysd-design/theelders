@@ -1,46 +1,72 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { BookOpen, ArrowDown, ChevronRight } from "lucide-react";
+import { BookOpen, ChevronRight } from "lucide-react";
+import { media } from "@/content/media";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "THE ELDER — Chronicles of the Lost Age" },
-      { name: "description", content: "Nem toda lenda conta a verdade. Leia THE ELDER, uma fantasia sombria sobre a Era Perdida." },
+      { name: "description", content: "Nem toda lenda conta a verdade. Leia THE ELDER, uma fantasia sombria em estilo mangá sobre a Era Perdida." },
       { property: "og:title", content: "THE ELDER — Chronicles of the Lost Age" },
-      { property: "og:description", content: "Nem toda lenda conta a verdade. Nem toda queda representa o fim." },
+      { property: "og:description", content: "Algumas lendas não devem ser esquecidas." },
     ],
   }),
   component: Home,
 });
 
+const panels = [
+  { img: media.besta, pos: "75% 95%", sfx: "GRRRAAH!", title: "A Queda", text: "Com um golpe da cauda, Suzue é lançada no abismo.", slug: "besta-do-abismo" },
+  { img: media.reptil, pos: "60% 72%", sfx: "SLASH!", title: "A Toca", text: "Ela não teve escolha. Teve que lutar.", slug: "criatura-da-toca" },
+  { img: media.pantera, pos: "85% 75%", sfx: "...", title: "A Sombra", text: "Nas profundezas... ela ainda observa.", slug: "pantera-negra" },
+];
+
 function Home() {
   return (
     <main>
-      <section className="hero">
-        <div className="hero-overlay" />
-        <div className="hero-content">
+      <section className="mg-hero">
+        <video className="mg-hero-video" src={media.videoAvancando} autoPlay muted loop playsInline />
+        <div className="mg-hero-shade" />
+        <div className="mg-hero-content">
           <div className="eyebrow"><span /> UMA HISTÓRIA ALÉM DAS LENDAS</div>
           <h1>THE<br /><em>ELDER</em></h1>
           <p className="hero-sub">Nem toda lenda conta a verdade.<br />Nem toda queda representa o fim.</p>
-          <p className="hero-copy">Em um mundo erguido sobre os vestígios de uma guerra esquecida, uma jovem aventureira encontrará nas profundezas respostas que ninguém deveria conhecer.</p>
           <div className="hero-actions">
             <Link to="/capitulos" className="primary-btn"><BookOpen size={17} /> COMEÇAR A LER</Link>
-            <Link to="/mundo" className="text-btn">EXPLORAR O UNIVERSO <ArrowDown size={15} /></Link>
+            <Link to="/personagens" className="mg-ghost-btn">PERSONAGENS <ChevronRight size={15} /></Link>
           </div>
-          <div className="hero-meta"><span>FANTASIA SOMBRIA</span><i /> <span>MISTÉRIO</span><i /> <span>AVENTURA</span></div>
         </div>
-        <div className="hero-side-note">VOL. I <span>—</span> O ABISMO</div>
-        <div className="hero-bottom"><span>ROLE PARA DESCOBRIR</span><div /></div>
+        <img className="mg-hero-cover" src={media.capa} alt="Capa de THE ELDER — Capítulo 1, O Abismo" />
+        <span className="mg-sfx mg-sfx-hero">ZAN!</span>
       </section>
-      <section className="intro-section">
-        <div className="section-kicker">01 / A JORNADA COMEÇA</div>
-        <div className="intro-grid"><div><h2>O mundo esqueceu.<br /><em>As profundezas, não.</em></h2></div><div className="intro-text"><p>Há mais de dois mil anos, Deuses e Demônios disputavam o domínio do mundo. Os humanos, frágeis diante de tamanho poder, encontraram uma maneira de mudar o destino de todos.</p><p>A guerra terminou. Uma nova era nasceu. E a verdade foi enterrada sob o nome de <strong>Era Perdida</strong>.</p></div></div>
+
+      <section className="mg-strip">
+        <div className="section-kicker">01 / CENAS DO CAPÍTULO</div>
+        <div className="mg-strip-grid">
+          {panels.map((p) => (
+            <Link key={p.title} to="/bestiario/$slug" params={{ slug: p.slug }} className="mg-panel mg-strip-panel" style={{ backgroundImage: `url(${p.img})`, backgroundPosition: p.pos }}>
+              <span className="mg-sfx">{p.sfx}</span>
+              <div className="mg-caption"><b>{p.title}</b>{p.text}</div>
+            </Link>
+          ))}
+        </div>
       </section>
-      <section className="feature-section">
-        <div className="section-kicker">02 / ENTRE NA HISTÓRIA</div>
-        <div className="feature-card"><div className="feature-art"><span className="art-caption">THE ELDER / CHAPTER 01</span></div><div className="feature-info"><span className="gold-label">CAPÍTULO DISPONÍVEL</span><h2>O Abismo</h2><p>Suzue entra em uma nova masmorra em busca de seu sonho. Mas uma traição a lançará em um lugar que nenhum aventureiro conhece.</p><div className="feature-details"><span>01 CAPÍTULO</span><span>LEITURA NARRATIVA</span></div><Link to="/capitulos" className="primary-btn">ABRIR CAPÍTULO <ChevronRight size={16} /></Link></div></div>
+
+      <section className="mg-split">
+        <div className="mg-panel mg-split-art"><img src={media.elderPreso} alt="O Elder aprisionado sob a luz da lua" /></div>
+        <div className="mg-split-text">
+          <div className="section-kicker">02 / O ANCIÃO</div>
+          <h2>Ele não é apenas um mago.<br /><em>É uma prisão vestida de homem.</em></h2>
+          <p>Há mais de dois mil anos, Deuses e Demônios disputavam o domínio do mundo. A guerra terminou, e a verdade foi enterrada sob o nome de <strong>Era Perdida</strong>.</p>
+          <Link to="/personagens/$slug" params={{ slug: "o-mago-selado" }} className="primary-btn">CONHECER O MAGO SELADO <ChevronRight size={16} /></Link>
+        </div>
       </section>
-      <section className="quote-band"><span>“</span><p>Já que não consigo subir...<br /><em>Irei descer.</em></p><small>— SUZUE</small></section>
+
+      <section className="mg-quote">
+        <video src={media.videoLevantando} autoPlay muted loop playsInline />
+        <div className="mg-quote-shade" />
+        <p className="mg-bubble">Já que não consigo subir...<br /><em>Irei descer.</em></p>
+        <small>— SUZUE</small>
+      </section>
     </main>
   );
 }

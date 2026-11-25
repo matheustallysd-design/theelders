@@ -9,6 +9,7 @@
 @source "../src";
 @import "tw-animate-css";
 @import "./elder.css";
+@import "./manga.css";
 
 @custom-variant dark (&:is(.dark *));
 

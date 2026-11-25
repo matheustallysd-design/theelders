@@ -17,6 +17,7 @@ export function SiteHeader() {
         <Link to="/capitulos" activeProps={active} onClick={close}>Capítulos</Link>
         <Link to="/mundo" activeProps={active} onClick={close}>Arquivo do Mundo</Link>
         <Link to="/personagens" activeProps={active} onClick={close}>Personagens</Link>
+        <Link to="/bestiario" activeProps={active} onClick={close}>Bestiário</Link>
       </nav>
       <button className="menu-toggle" onClick={() => setOpen(!open)} aria-label="Abrir menu">{open ? <X /> : <Menu />}</button>
     </header>
