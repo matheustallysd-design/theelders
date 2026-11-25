@@ -61,6 +61,20 @@ function Home() {
         </div>
       </section>
 
+      <section className="mg-timeline">
+        <div className="section-kicker">03 / LINHA DO TEMPO</div>
+        <ol>
+          {[
+            ["Há 2000 anos", "A Guerra Divina entre Deuses e Demônios.", "/mundo"],
+            ["A Era Perdida", "O ancião é selado nas profundezas.", "/personagens"],
+            ["Capítulo 01", "O Abismo — Suzune entra no labirinto.", "/capitulos"],
+            ["Em breve", "Capítulo 02 — em produção.", "/capitulos"],
+          ].map(([t, d, to], i) => (
+            <li key={t} className={i === 2 ? "now" : ""}><Link to={to as "/capitulos"}><b>{t}</b><span>{d}</span></Link></li>
+          ))}
+        </ol>
+      </section>
+
       <section className="mg-quote">
         <video src={media.videoLevantando} autoPlay muted loop playsInline />
         <div className="mg-quote-shade" />

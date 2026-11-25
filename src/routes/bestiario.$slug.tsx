@@ -24,5 +24,5 @@ export const Route = createFileRoute("/bestiario/$slug")({
 
 function BeastPage() {
   const e = Route.useLoaderData();
-  return <EntryDetail e={e} back={<Link to="/bestiario" className="back-link"><ChevronLeft size={16} /> BESTIÁRIO</Link>} extra={<p className="mg-size">TAMANHO: {e.size}</p>} />;
+  return <EntryDetail e={e} back={<Link to="/bestiario" className="back-link"><ChevronLeft size={16} /> BESTIÁRIO</Link>} extraText={`Tamanho: ${e.size}`} />;
 }

@@ -1,5 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import type { Entry } from "@/content/characters";
+import { BlockPage } from "./BlockPage";
+import { entryDefaults } from "@/lib/blocks";
 
 export function EntryCard({ e, kind }: { e: Entry; kind: "personagens" | "bestiario" }) {
   const inner = (
@@ -18,10 +20,10 @@ export function EntryCard({ e, kind }: { e: Entry; kind: "personagens" | "bestia
     : <Link to="/bestiario/$slug" params={{ slug: e.slug }} className="mg-card">{inner}</Link>;
 }
 
-export function EntryDetail({ e, back, extra }: { e: Entry; back: React.ReactNode; extra?: React.ReactNode }) {
+export function EntryDetail({ e, back, extraText }: { e: Entry; back: React.ReactNode; extraText?: string }) {
   return (
     <main className="mg-detail">
-      <section className="mg-detail-hero" style={{ backgroundImage: `url(${e.portrait})`, backgroundPosition: e.pos }}>
+      <section className="mg-detail-hero" style={{ backgroundImage: `url(${e.portrait})`, backgroundPosition: e.pos, backgroundSize: e.zoom ?? "220%" }}>
         <div className="mg-detail-shade" />
         <div className="mg-detail-text">
           {back}
@@ -30,13 +32,8 @@ export function EntryDetail({ e, back, extra }: { e: Entry; back: React.ReactNod
           <blockquote className="mg-bubble">“{e.quote}”</blockquote>
         </div>
       </section>
-      <section className="mg-detail-info">
-        <div><p className="mg-lead">{e.summary}</p><small className="mg-status">{e.status}</small>{extra}</div>
-        <ul className="mg-facts">{e.facts.map((f) => <li key={f}>{f}</li>)}</ul>
-      </section>
-      <section className="mg-sheets">
-        <div className="section-kicker">FICHAS / ARQUIVO</div>
-        {e.sheets.map((s, i) => <a key={s + i} href={s} target="_blank" rel="noreferrer" className="mg-panel"><img src={s} alt={`Ficha de ${e.name}`} loading="lazy" /></a>)}
+      <section className="mg-detail-body">
+        <BlockPage page={`entry-${e.slug}`} defaults={() => entryDefaults(e, extraText)} />
       </section>
     </main>
   );
