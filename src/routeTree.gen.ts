@@ -10,33 +10,63 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CapitulosRouteImport } from './routes/capitulos'
+import { Route as MundoRouteImport } from './routes/mundo'
+import { Route as PersonagensRouteImport } from './routes/personagens'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CapitulosRoute = CapitulosRouteImport.update({
+  id: '/capitulos',
+  path: '/capitulos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MundoRoute = MundoRouteImport.update({
+  id: '/mundo',
+  path: '/mundo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PersonagensRoute = PersonagensRouteImport.update({
+  id: '/personagens',
+  path: '/personagens',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/capitulos': typeof CapitulosRoute
+  '/mundo': typeof MundoRoute
+  '/personagens': typeof PersonagensRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/capitulos': typeof CapitulosRoute
+  '/mundo': typeof MundoRoute
+  '/personagens': typeof PersonagensRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/capitulos': typeof CapitulosRoute
+  '/mundo': typeof MundoRoute
+  '/personagens': typeof PersonagensRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/capitulos' | '/mundo' | '/personagens'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/capitulos' | '/mundo' | '/personagens'
+  id: '__root__' | '/' | '/capitulos' | '/mundo' | '/personagens'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CapitulosRoute: typeof CapitulosRoute
+  MundoRoute: typeof MundoRoute
+  PersonagensRoute: typeof PersonagensRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +78,35 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/capitulos': {
+      id: '/capitulos'
+      path: '/capitulos'
+      fullPath: '/capitulos'
+      preLoaderRoute: typeof CapitulosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mundo': {
+      id: '/mundo'
+      path: '/mundo'
+      fullPath: '/mundo'
+      preLoaderRoute: typeof MundoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/personagens': {
+      id: '/personagens'
+      path: '/personagens'
+      fullPath: '/personagens'
+      preLoaderRoute: typeof PersonagensRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CapitulosRoute: CapitulosRoute,
+  MundoRoute: MundoRoute,
+  PersonagensRoute: PersonagensRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
