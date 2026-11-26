@@ -188,7 +188,7 @@ function BlockView({ b, editing, selected, writing, over, onSelect, onOpen, onCh
 
   const Tag = b.kind === "quote" ? "blockquote" : "div";
   return (
-    <Tag ref={hostRef as React.RefObject<HTMLDivElement>} className={cls} style={style} onClick={onSelect} {...dnd}>
+    <Tag ref={hostRef as never} className={cls} style={style} onClick={onSelect} {...dnd}>
       {handles}
       <div className={b.kind === "quote" ? "mg-bubble" : b.kind === "sfx" ? "mg-sfx bk-sfx-t" : "bk-text"} style={txtStyle}
         contentEditable={writing} suppressContentEditableWarning
