@@ -2,17 +2,18 @@ import { chapter } from "@/content/story";
 import { media, sceneArt } from "@/content/media";
 import type { Entry } from "@/content/characters";
 
-export type BlockKind = "text" | "image" | "video" | "sfx" | "quote";
+export type BlockKind = "text" | "image" | "video" | "sfx" | "quote" | "divider";
 export type Block = {
   id: string; kind: BlockKind; content: string; src: string | null;
   pos: string; zoom: number; align: "left" | "center" | "right";
   bold: boolean; italic: boolean; size: "sm" | "md" | "lg"; width: number;
+  color: "default" | "blood" | "arcane" | "gold" | "paper"; font: "body" | "manga" | "title"; frame: "straight" | "slant" | "none";
 };
 
 let n = 0;
 export const newId = () => `tmp-${Date.now().toString(36)}-${(n++).toString(36)}`;
 export const mk = (p: Partial<Block> & { kind: BlockKind }): Block => ({
-  id: newId(), content: "", src: null, pos: "50% 50%", zoom: 100, align: "left", bold: false, italic: false, size: "md", width: 100, ...p,
+  id: newId(), content: "", src: null, pos: "50% 50%", zoom: 100, align: "left", bold: false, italic: false, size: "md", width: 100, color: "default", font: "body", frame: "straight", ...p,
 });
 
 const sfxList = ["ZAN!", "DOOM...", "KRAK!", "GRRRAAH!", "SLASH!", "THUD!", "SSSSS...", "VRUUM!", "..."];

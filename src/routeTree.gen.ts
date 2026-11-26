@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AvaliacoesRouteImport } from './routes/avaliacoes'
 import { Route as CapitulosRouteImport } from './routes/capitulos'
 import { Route as MundoRouteImport } from './routes/mundo'
 import { Route as PainelRouteImport } from './routes/painel'
@@ -27,6 +28,11 @@ const IndexRoute = IndexRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AvaliacoesRoute = AvaliacoesRouteImport.update({
+  id: '/avaliacoes',
+  path: '/avaliacoes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CapitulosRoute = CapitulosRouteImport.update({
@@ -68,6 +74,7 @@ const PersonagensSlugRoute = PersonagensSlugRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/avaliacoes': typeof AvaliacoesRoute
   '/capitulos': typeof CapitulosRoute
   '/mundo': typeof MundoRoute
   '/painel': typeof PainelRoute
@@ -79,6 +86,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/avaliacoes': typeof AvaliacoesRoute
   '/capitulos': typeof CapitulosRoute
   '/mundo': typeof MundoRoute
   '/painel': typeof PainelRoute
@@ -91,6 +99,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/avaliacoes': typeof AvaliacoesRoute
   '/capitulos': typeof CapitulosRoute
   '/mundo': typeof MundoRoute
   '/painel': typeof PainelRoute
@@ -104,6 +113,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/avaliacoes'
     | '/capitulos'
     | '/mundo'
     | '/painel'
@@ -115,6 +125,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/avaliacoes'
     | '/capitulos'
     | '/mundo'
     | '/painel'
@@ -126,6 +137,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/auth'
+    | '/avaliacoes'
     | '/capitulos'
     | '/mundo'
     | '/painel'
@@ -138,6 +150,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  AvaliacoesRoute: typeof AvaliacoesRoute
   CapitulosRoute: typeof CapitulosRoute
   MundoRoute: typeof MundoRoute
   PainelRoute: typeof PainelRoute
@@ -161,6 +174,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/avaliacoes': {
+      id: '/avaliacoes'
+      path: '/avaliacoes'
+      fullPath: '/avaliacoes'
+      preLoaderRoute: typeof AvaliacoesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/capitulos': {
@@ -218,6 +238,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  AvaliacoesRoute: AvaliacoesRoute,
   CapitulosRoute: CapitulosRoute,
   MundoRoute: MundoRoute,
   PainelRoute: PainelRoute,

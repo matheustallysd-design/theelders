@@ -20,6 +20,7 @@ export function SiteHeader() {
         <Link to="/mundo" activeProps={active} onClick={close}>Arquivo do Mundo</Link>
         <Link to="/personagens" activeProps={active} onClick={close}>Personagens</Link>
         <Link to="/bestiario" activeProps={active} onClick={close}>Bestiário</Link>
+        <Link to="/avaliacoes" activeProps={active} onClick={close}>Avaliações</Link>
         {isAdmin && <Link to="/painel" activeProps={active} onClick={close}><LayoutDashboard size={14} /> Painel</Link>}
         {isAdmin && <button className={editMode ? "nav-edit on" : "nav-edit"} onClick={() => setEditMode(!editMode)}><PenLine size={14} /> {editMode ? "Editando" : "Modo edição"}</button>}
         {user ? <button className="nav-auth" onClick={() => { signOut(); close(); }}><LogOut size={14} /> Sair</button>

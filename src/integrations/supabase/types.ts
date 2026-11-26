@@ -18,7 +18,10 @@ export type Database = {
         Row: {
           align: string
           bold: boolean
+          color: string
           content: string
+          font: string
+          frame: string
           id: string
           italic: boolean
           kind: string
@@ -34,7 +37,10 @@ export type Database = {
         Insert: {
           align?: string
           bold?: boolean
+          color?: string
           content?: string
+          font?: string
+          frame?: string
           id?: string
           italic?: boolean
           kind?: string
@@ -50,7 +56,10 @@ export type Database = {
         Update: {
           align?: string
           bold?: boolean
+          color?: string
           content?: string
+          font?: string
+          frame?: string
           id?: string
           italic?: boolean
           kind?: string
@@ -80,6 +89,63 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+        }
+        Relationships: []
+      }
+      reactions: {
+        Row: {
+          chapter: string
+          created_at: string
+          id: string
+          kind: string
+          user_id: string
+        }
+        Insert: {
+          chapter: string
+          created_at?: string
+          id?: string
+          kind: string
+          user_id: string
+        }
+        Update: {
+          chapter?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      reviews: {
+        Row: {
+          author: string
+          comment: string
+          created_at: string
+          hidden: boolean
+          id: string
+          rating: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          author?: string
+          comment?: string
+          created_at?: string
+          hidden?: boolean
+          id?: string
+          rating: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          author?: string
+          comment?: string
+          created_at?: string
+          hidden?: boolean
+          id?: string
+          rating?: number
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
