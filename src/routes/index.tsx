@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BookOpen, ChevronRight } from "lucide-react";
 import { media } from "@/content/media";
+import { EText } from "@/components/Editable";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -27,9 +28,16 @@ function Home() {
         <video className="mg-hero-video" src={media.videoAvancando} autoPlay muted loop playsInline />
         <div className="mg-hero-shade" />
         <div className="mg-hero-content">
-          <div className="eyebrow"><span /> UMA HISTÓRIA ALÉM DAS LENDAS</div>
-          <h1>THE<br /><em>ELDER</em></h1>
-          <p className="hero-sub">Nem toda lenda conta a verdade.<br />Nem toda queda representa o fim.</p>
+          <div className="eyebrow">
+            <span /> <EText id="home-eyebrow" text="UMA HISTÓRIA ALÉM DAS LENDAS" />
+          </div>
+          <h1>
+            <EText id="home-title-the" text="THE" /><br />
+            <em><EText id="home-title-elder" text="ELDER" /></em>
+          </h1>
+          <p className="hero-sub">
+            <EText id="home-sub" text={"Nem toda lenda conta a verdade.\nNem toda queda representa o fim."} />
+          </p>
           <div className="hero-actions">
             <Link to="/capitulos" className="primary-btn"><BookOpen size={17} /> COMEÇAR A LER</Link>
             <Link to="/personagens" className="mg-ghost-btn">PERSONAGENS <ChevronRight size={15} /></Link>
@@ -55,31 +63,14 @@ function Home() {
         <div className="mg-panel mg-split-art"><img src={media.elderPreso} alt="O Elder aprisionado sob a luz da lua" /></div>
         <div className="mg-split-text">
           <div className="section-kicker">02 / O ANCIÃO</div>
-          <h2>Ele não é apenas um mago.<br /><em>É uma prisão vestida de homem.</em></h2>
-          <p>Há mais de dois mil anos, Deuses e Demônios disputavam o domínio do mundo. A guerra terminou, e a verdade foi enterrada sob o nome de <strong>Era Perdida</strong>.</p>
+          <h2>
+            <EText id="home-ancao-title" text={"Ele não é apenas um mago.\nÉ uma prisão vestida de homem."} />
+          </h2>
+          <p>
+            <EText id="home-ancao-desc" text="Há mais de dois mil anos, Deuses e Demônios disputavam o domínio do mundo. A guerra terminou, e a verdade foi enterrada sob o nome de Era Perdida." />
+          </p>
           <Link to="/personagens/$slug" params={{ slug: "o-mago-selado" }} className="primary-btn">CONHECER O MAGO SELADO <ChevronRight size={16} /></Link>
         </div>
-      </section>
-
-      <section className="mg-timeline">
-        <div className="section-kicker">03 / LINHA DO TEMPO</div>
-        <ol>
-          {[
-            ["Há 2000 anos", "A Guerra Divina entre Deuses e Demônios.", "/mundo"],
-            ["A Era Perdida", "O ancião é selado nas profundezas.", "/personagens"],
-            ["Capítulo 01", "O Abismo — Suzune entra no labirinto.", "/capitulos"],
-            ["Em breve", "Capítulo 02 — em produção.", "/capitulos"],
-          ].map(([t, d, to], i) => (
-            <li key={t} className={i === 2 ? "now" : ""}><Link to={to as "/capitulos"}><b>{t}</b><span>{d}</span></Link></li>
-          ))}
-        </ol>
-      </section>
-
-      <section className="mg-quote">
-        <video src={media.videoLevantando} autoPlay muted loop playsInline />
-        <div className="mg-quote-shade" />
-        <p className="mg-bubble">Já que não consigo subir...<br /><em>Irei descer.</em></p>
-        <small>— SUZUE</small>
       </section>
     </main>
   );
