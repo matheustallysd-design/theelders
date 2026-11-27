@@ -1,30 +1,38 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Menu, X, PenLine, LogIn, LogOut, LayoutDashboard } from "lucide-react";
+import { Menu, X, BookOpen, Users, Compass, Shield, Star } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { EText } from "@/components/Editable";
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
-  const close = () => setOpen(false);
-  const active = { className: "active" };
   const { user, isAdmin, editMode, setEditMode, signOut } = useAuth();
+
   return (
-    <header className="topbar">
-      <Link to="/" className="brand" aria-label="Ir para o início" onClick={close}>
-        <span className="brand-mark">E</span>
-        <span>THE <b>ELDER</b><small>CHRONICLES OF THE LOST AGE</small></span>
-      </Link>
-      <nav className={open ? "nav open" : "nav"}>
-        <Link to="/" activeProps={active} activeOptions={{ exact: true }} onClick={close}>Início</Link>
-        <Link to="/capitulos" activeProps={active} onClick={close}>Capítulos</Link>
-        <Link to="/mundo" activeProps={active} onClick={close}>Arquivo do Mundo</Link>
-        <Link to="/personagens" activeProps={active} onClick={close}>Personagens</Link>
-        <Link to="/bestiario" activeProps={active} onClick={close}>Bestiário</Link>
-        <Link to="/avaliacoes" activeProps={active} onClick={close}>Avaliações</Link>
-        {isAdmin && <Link to="/painel" activeProps={active} onClick={close}><LayoutDashboard size={14} /> Painel</Link>}
-        {isAdmin && <button className={editMode ? "nav-edit on" : "nav-edit"} onClick={() => setEditMode(!editMode)}><PenLine size={14} /> {editMode ? "Editando" : "Modo edição"}</button>}
-        {user ? <button className="nav-auth" onClick={() => { signOut(); close(); }}><LogOut size={14} /> Sair</button>
-          : <Link to="/auth" className="nav-auth" onClick={close}><LogIn size={14} /> Entrar</Link>}
+    <header className="site-header">
+      <Link to="/" className="site-logo" onClick={() => setOpen(false)}>THE <b>ELDER</b></Link>
+      <nav className={`site-nav ${open ? "open" : ""}`}>
+        <Link to="/capitulos" onClick={() => setOpen(false)}><BookOpen size={16} /> Ler</Link>
+        <Link to="/mundo" onClick={() => setOpen(false)}><Compass size={16} /> Mundo</Link>
+        <Link to="/personagens" onClick={() => setOpen(false)}><Users size={16} /> Personagens</Link>
+        <Link to="/bestiario" onClick={() => setOpen(false)}><Shield size={16} /> Bestiário</Link>
+        <Link to="/avaliacoes" onClick={() => setOpen(false)}><Star size={16} /> Avaliações</Link>
+        {isAdmin && <Link to="/painel" onClick={() => setOpen(false)}>Painel</Link>}
+        {isAdmin && (
+          <button
+            type="button"
+            className={editMode ? "edit-toggle-btn active" : "edit-toggle-btn"}
+            onClick={() => setEditMode(!editMode)}
+            title="Ligar/desligar modo de edição"
+          >
+            {editMode ? "● Modo edição: ON" : "○ Modo edição"}
+          </button>
+        )}
+        {user ? (
+          <button type="button" className="auth-nav-btn" onClick={() => signOut()}>Sair</button>
+        ) : (
+          <Link to="/auth" className="auth-nav-btn" onClick={() => setOpen(false)}>Entrar</Link>
+        )}
       </nav>
       <button className="menu-toggle" onClick={() => setOpen(!open)} aria-label="Abrir menu">{open ? <X /> : <Menu />}</button>
     </header>
@@ -33,6 +41,16 @@ export function SiteHeader() {
 
 export function SiteFooter() {
   return (
-    <footer><div className="footer-brand">THE <b>ELDER</b></div><p>Uma história sobre aquilo que o mundo escolheu esquecer.</p><span>PROJETO INDEPENDENTE · 2026</span></footer>
+    <footer>
+      <div className="footer-brand">
+        <EText id="footer-brand-the" text="THE" /> <b><EText id="footer-brand-elder" text="ELDER" /></b>
+      </div>
+      <p>
+        <EText id="footer-slogan" text="Uma história sobre aquilo que o mundo escolheu esquecer." />
+      </p>
+      <span>
+        <EText id="footer-tagline" text="PROJETO INDEPENDENTE · 2026" />
+      </span>
+    </footer>
   );
 }
