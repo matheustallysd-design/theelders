@@ -67,60 +67,66 @@ function Reader() {
         <p><EText id="cap-heading-subtitle" text={chapter.subtitle} /></p>
       </div>
 
+      <div className="progress-wrap">
+        <div className="progress-label">
+          <span>PROGRESSO DO CAPÍTULO</span>
+          <span>{progress}%</span>
+        </div>
+        <div className="progress-track">
+          <div style={{ width: `${progress}%` }} />
+        </div>
+      </div>
+
       <div className="mode-switch">
-        <span>Modo de leitura:</span>
-        <button type="button" className={mode === "cena" ? "active" : ""} onClick={() => setMode("cena")}>
-          <BookOpen size={14} /> Cena a cena
+        <button className={mode === "cena" ? "on" : ""} onClick={() => setMode("cena")}>
+          <BookOpen size={14} /> CENA A CENA
         </button>
-        <button type="button" className={mode === "rolo" ? "active" : ""} onClick={() => setMode("rolo")}>
-          <ScrollText size={14} /> Rolo contínuo
+        <button className={mode === "rolo" ? "on" : ""} onClick={() => setMode("rolo")}>
+          <ScrollText size={14} /> ROLO CONTÍNUO
         </button>
       </div>
 
       {mode === "cena" ? (
-        <article className="reader-card">
-          <div className="reader-card-header">
-            <span className="scene-indicator">Cena {String(section + 1).padStart(2, "0")} de {String(total).padStart(2, "0")}</span>
-            <span className="progress-pct">{progress}%</span>
-          </div>
-          <div className="progress-bar"><div className="progress-fill" style={{ width: `${progress}%` }} /></div>
-          <h2>{current.heading}</h2>
-
-          <BlockPage page={`cap01-s${section}`} defaults={() => sceneDefaults(section)} />
-
-          <Pager current={section} total={total} onGo={go} label="Cena" />
-
-          <div className="reader-nav">
-            <button className="nav-btn" disabled={section === 0} onClick={() => go(section - 1)}>
-              <ChevronLeft size={18} /> Anterior
+        <>
+          <Pager current={section} total={total} onGo={go} label="Cenas do capítulo" />
+          <article className="story-panel bk-story">
+            <div className="story-section-label">
+              <span>✦</span> {current.heading.toUpperCase()}
+            </div>
+            <BlockPage page={`cap01-s${section}`} defaults={() => sceneDefaults(section)} />
+          </article>
+          <div className="reader-controls">
+            <button
+              className="secondary-btn"
+              disabled={section === 0}
+              onClick={() => go(Math.max(0, section - 1))}
+            >
+              <ChevronLeft size={16} /> ANTERIOR
             </button>
-            {last ? (
-              <button className="nav-btn finish" onClick={() => navigate({ to: "/mundo" })}>
-                Concluir leitura <ChevronRight size={18} />
-              </button>
-            ) : (
-              <button className="nav-btn primary" onClick={() => go(section + 1)}>
-                Próxima cena <ChevronRight size={18} />
-              </button>
-            )}
+            <span>
+              {String(section + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}
+            </span>
+            <button
+              className="primary-btn"
+              onClick={() => (last ? navigate({ to: "/" }) : go(section + 1))}
+            >
+              {last ? "FINALIZAR" : "PRÓXIMA CENA"} <ChevronRight size={16} />
+            </button>
           </div>
-        </article>
+          <Pager current={section} total={total} onGo={go} label="Cenas do capítulo" />
+        </>
       ) : (
-        <div className="reader-continuous">
-          {chapter.sections.map((s, i) => (
-            <article key={i} className="reader-card continuous-scene" id={`cena-${i + 1}`}>
-              <div className="reader-card-header">
-                <span className="scene-indicator">Cena {String(i + 1).padStart(2, "0")} — {s.heading}</span>
-                <span className="progress-pct">{Math.round(((i + 1) / total) * 100)}%</span>
-              </div>
-              <h2>{s.heading}</h2>
-              <BlockPage page={`cap01-s${i}`} defaults={() => sceneDefaults(i)} />
-            </article>
-          ))}
-        </div>
+        chapter.sections.map((s, i) => (
+          <article key={i} className="story-panel bk-story">
+            <div className="story-section-label">
+              <span>✦</span> {String(i + 1).padStart(2, "0")}. {s.heading.toUpperCase()}
+            </div>
+            <BlockPage page={`cap01-s${i}`} defaults={() => sceneDefaults(i)} />
+          </article>
+        ))
       )}
 
-      <Reactions chapter="cap01" />
+      {(last || mode === "rolo") && <Reactions chapter="cap01" />}
     </main>
   );
 }
