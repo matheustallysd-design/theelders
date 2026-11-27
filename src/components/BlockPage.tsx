@@ -64,17 +64,30 @@ function useReveal() {
   return ref;
 }
 
+/**
+ * A tabela content_blocks guarda um registro por página.
+ * A coluna `blocks` contém o array completo de blocos em JSONB.
+ */
 async function fetchBlocks(page: string): Promise<Block[]> {
   const { data, error } = await supabase
     .from("content_blocks")
     .select("blocks")
     .eq("page", page)
     .maybeSingle();
+
   if (error) {
-    console.warn("fetchBlocks:", error);
-    return [];
+    console.error("Erro ao carregar os blocos da página:", error);
+    throw error;
   }
-  return (data?.blocks as Block[]) ?? [];
+
+  if (!data?.blocks) return [];
+  if (!Array.isArray(data.blocks)) {
+    throw new Error(
+      `O conteúdo salvo da página "${page}" está em formato inválido.`
+    );
+  }
+
+  return data.blocks as Block[];
 }
 
 export function BlockPage({
@@ -88,7 +101,11 @@ export function BlockPage({
 }) {
   const qc = useQueryClient();
   const { editMode } = useAuth();
-  const q = useQuery({ queryKey: ["blocks", page], queryFn: () => fetchBlocks(page) });
+  const q = useQuery({
+    queryKey: ["blocks", page],
+    queryFn: () => fetchBlocks(page),
+    staleTime: 0,
+  });
   const [draft, setDraft] = useState<Block[] | null>(null);
   const [history, setHistory] = useState<Block[][]>([]);
   const [sel, setSel] = useState<string | null>(null);
@@ -183,24 +200,36 @@ export function BlockPage({
   };
 
   const save = async () => {
-    if (!draft) return;
+    if (!draft || saving) return;
+
+    // Mantém uma cópia estável do conteúdo enviado ao Supabase.
+    const snapshot = draft;
     setSaving(true);
+
     try {
-      const { error } = await supabase.from("content_blocks").upsert(
-        {
-          page,
-          blocks: draft as any,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "page" }
-      );
+      const { error } = await supabase
+        .from("content_blocks")
+        .upsert(
+          {
+            page,
+            blocks: snapshot as any,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "page" }
+        );
+
       if (error) throw error;
+
       await qc.invalidateQueries({ queryKey: ["blocks", page] });
+
       setDraft(null);
       setHistory([]);
-      toast.success("Alterações salvas!");
-    } catch (e: any) {
-      toast.error(e?.message ?? "Falha ao salvar.");
+      toast.success("Alterações salvas no banco de dados!");
+    } catch (e: unknown) {
+      console.error("Erro ao salvar os blocos:", e);
+      const message =
+        e instanceof Error ? e.message : "Falha ao salvar as alterações.";
+      toast.error(message);
     } finally {
       setSaving(false);
     }
