@@ -84,11 +84,11 @@ function Reader() {
             <span className="progress-pct">{progress}%</span>
           </div>
           <div className="progress-bar"><div className="progress-fill" style={{ width: `${progress}%` }} /></div>
-          <h2>{current.title}</h2>
+          <h2>{current.heading}</h2>
 
-          <BlockPage page={`cap01-s${section}`} defaults={() => sceneDefaults(section, current)} />
+          <BlockPage page={`cap01-s${section}`} defaults={() => sceneDefaults(section)} />
 
-          <Pager current={section} total={total} onPage={go} label="Cena" />
+          <Pager current={section} total={total} onGo={go} label="Cena" />
 
           <div className="reader-nav">
             <button className="nav-btn" disabled={section === 0} onClick={() => go(section - 1)}>
@@ -110,17 +110,17 @@ function Reader() {
           {chapter.sections.map((s, i) => (
             <article key={i} className="reader-card continuous-scene" id={`cena-${i + 1}`}>
               <div className="reader-card-header">
-                <span className="scene-indicator">Cena {String(i + 1).padStart(2, "0")} — {s.title}</span>
+                <span className="scene-indicator">Cena {String(i + 1).padStart(2, "0")} — {s.heading}</span>
                 <span className="progress-pct">{Math.round(((i + 1) / total) * 100)}%</span>
               </div>
-              <h2>{s.title}</h2>
-              <BlockPage page={`cap01-s${i}`} defaults={() => sceneDefaults(i, s)} />
+              <h2>{s.heading}</h2>
+              <BlockPage page={`cap01-s${i}`} defaults={() => sceneDefaults(i)} />
             </article>
           ))}
         </div>
       )}
 
-      <Reactions chapter="capitulo-01" />
+      <Reactions chapter="cap01" />
     </main>
   );
 }
