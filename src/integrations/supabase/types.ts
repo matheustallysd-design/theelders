@@ -30,6 +30,7 @@ export type Database = {
           position: number
           size: string
           src: string | null
+          style: Json
           updated_at: string
           width: number
           zoom: number
@@ -49,6 +50,7 @@ export type Database = {
           position?: number
           size?: string
           src?: string | null
+          style?: Json
           updated_at?: string
           width?: number
           zoom?: number
@@ -68,6 +70,7 @@ export type Database = {
           position?: number
           size?: string
           src?: string | null
+          style?: Json
           updated_at?: string
           width?: number
           zoom?: number
@@ -178,6 +181,13 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      reaction_counts: {
+        Args: { _chapter: string }
+        Returns: {
+          kind: string
+          total: number
+        }[]
       }
     }
     Enums: {

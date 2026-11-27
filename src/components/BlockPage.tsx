@@ -111,7 +111,14 @@ export function BlockPage({ page, defaults, className }: { page: string; default
           onAddImage={() => setPicker({ mode: "add", id: selected.id })}
           onReplace={() => setPicker({ mode: "replace", id: selected.id })} />
       )}
-      {editMode && (
+      {editMode && blocks.length === 0 && (
+        <div className="ed-empty">
+          <button onClick={() => { const b = mk({ kind: "text", content: "Novo texto..." }); apply([b]); setSel(b.id); }}><Type size={14} /> Adicionar texto aqui</button>
+          <button onClick={() => { const b = mk({ kind: "sfx", content: "BOOM!", align: "center", font: "manga" }); apply([b]); setSel(b.id); }}><Zap size={14} /> Onomatopeia</button>
+          <button onClick={() => { const b = mk({ kind: "quote", content: "Fala do personagem...", align: "center" }); apply([b]); setSel(b.id); }}><MessageCircle size={14} /> Balão</button>
+        </div>
+      )}
+      {editMode && (dirty || sel || !className?.includes("bk-quiet")) && (blocks.length > 0 || dirty) && (
         <div className="ed-bar">
           <span>{dirty ? "Alterações não salvas" : "Clique para selecionar · clique de novo para escrever · arraste pela alça"}</span>
           <button onClick={undo} disabled={!history.length} title="Ctrl+Z"><Undo2 size={15} /> Desfazer</button>
