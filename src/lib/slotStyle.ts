@@ -1,18 +1,18 @@
 import type { CSSProperties } from "react";
 
 export type SlotStyle = {
-  size?: "sm" | "md" | "lg" | "xl";
-  bold?: boolean;
-  italic?: boolean;
-  align?: "left" | "center" | "right";
-  color?: string;
-  font?: "" | "manga" | "title" | "body";
-  lh?: number;
-  glow?: boolean;
-  zoom?: number;
-  rotate?: number;
-  radius?: number;
-  filter?: string;
+  size?: "sm" | "md" | "lg" | "xl" | undefined;
+  bold?: boolean | undefined;
+  italic?: boolean | undefined;
+  align?: "left" | "center" | "right" | undefined;
+  color?: string | undefined;
+  font?: "" | "manga" | "title" | "body" | undefined;
+  lh?: number | undefined;
+  glow?: boolean | undefined;
+  zoom?: number | undefined;
+  rotate?: number | undefined;
+  radius?: number | undefined;
+  filter?: string | undefined;
 };
 
 export const SIZE_EM = { sm: 0.8, md: 1, lg: 1.3, xl: 1.7 } as const;

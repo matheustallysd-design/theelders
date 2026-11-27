@@ -87,7 +87,7 @@ export function EText({ id, text, className, style }: { id: string; text: string
 }
 
 /** Imagem/vídeo único editável. Devolve src/pos atuais, estilos visuais (filtro, giro, cantos, zoom) e o editor (colocar dentro de elemento com position:relative). */
-export function useEImg(id: string, src: string, pos = "50% 50%"): { src: string; pos: string; video: boolean; fx: CSSProperties; zoom?: string; editor: ReactNode } {
+export function useEImg(id: string, src: string, pos = "50% 50%"): { src: string; pos: string; video: boolean; fx: CSSProperties; zoom?: string | undefined; editor: ReactNode } {
   const { editMode } = useAuth();
   const { data } = useSlots();
   const save = useSaveSlot();
