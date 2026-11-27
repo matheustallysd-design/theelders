@@ -1,5 +1,6 @@
 import { chapter } from "@/content/story";
 import { media, sceneArt } from "@/content/media";
+import type { Entry } from "@/content/characters";
 
 export type BlockKind = "text" | "image" | "video" | "sfx" | "quote" | "divider" | "audio";
 
@@ -8,8 +9,8 @@ export type Block = {
   kind: BlockKind;
   content: string;
   src: string | null;
-  pos: string; // Para áudio: "voice" (Dublagem) ou "bgm" (Trilha Sonora)
-  zoom: number; // Para áudio: Volume de 0 a 100
+  pos: string;
+  zoom: number;
   align: "left" | "center" | "right";
   bold: boolean;
   italic: boolean;
@@ -18,6 +19,10 @@ export type Block = {
   color: "default" | "blood" | "arcane" | "gold" | "paper";
   font: "body" | "manga" | "title";
   frame: "straight" | "slant" | "none";
+  caption?: string;
+  audioMode?: "bgm" | "voice";
+  label?: string;
+  volume?: number;
 };
 
 let n = 0;
@@ -28,7 +33,7 @@ export const mk = (p: Partial<Block> & { kind: BlockKind }): Block => ({
   content: "",
   src: null,
   pos: p.kind === "audio" ? "voice" : "50% 50%",
-  zoom: p.kind === "audio" ? 100 : 100,
+  zoom: 100,
   align: "left",
   bold: false,
   italic: false,
@@ -37,6 +42,8 @@ export const mk = (p: Partial<Block> & { kind: BlockKind }): Block => ({
   color: "default",
   font: "body",
   frame: "straight",
+  audioMode: p.kind === "audio" ? "voice" : undefined,
+  volume: 0.8,
   ...p,
 });
 
@@ -80,4 +87,36 @@ export function sceneDefaults(i: number): Block[] {
     }
   });
   return out;
+}
+
+/** Ficha de personagem/besta: texto e recortes alternados. */
+export function entryDefaults(e: Entry, extra?: string): Block[] {
+  const sheet = e.sheets[0] ?? e.portrait;
+  const out: Block[] = [
+    mk({ kind: "text", content: e.summary, size: "lg" }),
+    mk({ kind: "image", src: sheet, zoom: 260, pos: "20% 25%", align: "right", content: "Detalhe da ficha" }),
+  ];
+  if (extra) out.push(mk({ kind: "text", content: extra, bold: true }));
+  e.facts.forEach((f, k) => {
+    out.push(mk({ kind: "text", content: f }));
+    if (k === 1) out.push(mk({ kind: "image", src: e.sheets[1] ?? sheet, zoom: 260, pos: "80% 30%", align: "left" }));
+  });
+  out.push(mk({ kind: "quote", content: e.quote, align: "center" }));
+  out.push(mk({ kind: "image", src: sheet, zoom: 100, align: "center", content: "Ficha completa" }));
+  return out;
+}
+
+/** Arquivo do Mundo: visões das regiões e lendas. */
+export function worldDefaults(): Block[] {
+  const items: [string, string, string][] = [
+    ["Eras & História", "A Guerra Divina, a Era Perdida e os acontecimentos que moldaram o presente.", media.capa],
+    ["Regiões & Masmorras", "Territórios conhecidos, labirintos recém-descobertos e lugares que não constam nos mapas.", media.reptil],
+    ["Magia & Sistemas", "O desenvolvimento da magia, afinidades elementais e conhecimentos antigos.", media.mago],
+    ["Raças & Povos", "Humanos, Elfos, Meio-humanos e outras raças que habitam este mundo.", media.duo],
+  ];
+  return items.flatMap(([t, d, src], k) => [
+    mk({ kind: "image", src, zoom: k ? 220 : 100, pos: `${30 + k * 15}% ${20 + k * 15}%`, align: k % 2 ? "right" : "left", content: t }),
+    mk({ kind: "text", content: t, size: "lg", bold: true }),
+    mk({ kind: "text", content: d }),
+  ]);
 }
