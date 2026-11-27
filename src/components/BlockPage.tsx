@@ -38,42 +38,44 @@ import { mk, type Block } from "@/lib/blocks";
 import { MediaPicker, type MediaType } from "./MediaPicker";
 import { Glossed } from "./Glossary";
 
+const clamp = (n: number, min: number, max: number) => Math.min(Math.max(n, min), max);
+
 function useReveal() {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const io = new IntersectionObserver((es) => es.forEach((e) => e.isIntersecting && e.target.classList.add("in")), {
-      threshold: 0.15,
-    });
-    el.querySelectorAll(".bk").forEach((b) => io.observe(b));
+    const items = el.querySelectorAll<HTMLElement>(".bk:not(.revealed)");
+    if (!items.length) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("revealed");
+            io.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: "0px 0px -40px 0px" }
+    );
+    items.forEach((item) => io.observe(item));
     return () => io.disconnect();
   });
   return ref;
 }
 
-async function fetchBlocks(page: string): Promise<Block[] | null> {
-  const { data, error } = await supabase.from("content_blocks").select("*").eq("page", page).order("position");
-  if (error || !data?.length) return null;
-  return data.map((r) => ({
-    id: r.id,
-    kind: r.kind as Block["kind"],
-    content: r.content,
-    src: r.src,
-    pos: r.pos,
-    zoom: r.zoom,
-    align: r.align as Block["align"],
-    bold: r.bold,
-    italic: r.italic,
-    size: r.size as Block["size"],
-    width: r.width ?? 100,
-    color: (r.color ?? "default") as Block["color"],
-    font: (r.font ?? "body") as Block["font"],
-    frame: (r.frame ?? "straight") as Block["frame"],
-  }));
+async function fetchBlocks(page: string): Promise<Block[]> {
+  const { data, error } = await supabase
+    .from("content_blocks")
+    .select("blocks")
+    .eq("page", page)
+    .maybeSingle();
+  if (error) {
+    console.warn("fetchBlocks:", error);
+    return [];
+  }
+  return (data?.blocks as Block[]) ?? [];
 }
-
-const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 
 export function BlockPage({
   page,
@@ -91,9 +93,9 @@ export function BlockPage({
   const [history, setHistory] = useState<Block[][]>([]);
   const [sel, setSel] = useState<string | null>(null);
   const [writing, setWriting] = useState(false);
-  const [dragOver, setDragOver] = useState<string | null>(null);
+  const [dragTarget, setDragTarget] = useState<{ id: string; pos: "top" | "bottom" } | null>(null);
   const dragId = useRef<string | null>(null);
-  const [picker, setPicker] = useState<null | { mode: "replace" | "add"; id: string }>(null);
+  const [picker, setPicker] = useState<null | { mode: "replace" | "add"; id: string; type?: MediaType }>(null);
   const [lightbox, setLightbox] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const ref = useReveal();
@@ -129,13 +131,19 @@ export function BlockPage({
     [a[i], a[j]] = [a[j]!, a[i]!];
     apply(a);
   };
-  const moveTo = (from: string, to: string) => {
+  const moveTo = (from: string, to: string, pos: "top" | "bottom" = "top") => {
     if (from === to) return;
-    const a = blocks.filter((b) => b.id !== from);
-    const item = blocks[idx(from)];
+    const a = [...blocks];
+    const fromIdx = a.findIndex((b) => b.id === from);
+    if (fromIdx < 0) return;
+    const [item] = a.splice(fromIdx, 1);
     if (!item) return;
-    a.splice(a.findIndex((b) => b.id === to), 0, item);
+    const toIdx = a.findIndex((b) => b.id === to);
+    if (toIdx < 0) return;
+    const targetIdx = pos === "bottom" ? toIdx + 1 : toIdx;
+    a.splice(targetIdx, 0, item);
     apply(a);
+    setSel(item.id);
   };
   const insertAfter = (id: string, b: Block) => {
     const i = idx(id);
@@ -148,69 +156,73 @@ export function BlockPage({
     apply(blocks.filter((b) => b.id !== id));
     setSel(null);
   };
+
   const undo = () => {
-    const h = [...history];
-    const prev = h.pop();
-    if (!prev) return;
-    setHistory(h);
+    if (!history.length) return;
+    const prev = history[history.length - 1]!;
+    setHistory((h) => h.slice(0, -1));
     setDraft(prev);
   };
 
-  const save = async () => {
+  const resetOriginal = async () => {
+    if (!confirm("Restaurar o conteúdo original desta página?")) return;
     setSaving(true);
-    const rows = blocks.map((b, i) => ({
-      page,
-      position: i,
-      kind: b.kind,
-      content: b.content,
-      src: b.src,
-      pos: b.pos,
-      zoom: b.zoom,
-      align: b.align,
-      bold: b.bold,
-      italic: b.italic,
-      size: b.size,
-      width: b.width,
-      color: b.color,
-      font: b.font,
-      frame: b.frame,
-    }));
-    const del = await supabase.from("content_blocks").delete().eq("page", page);
-    const ins = del.error ? del : await supabase.from("content_blocks").insert(rows);
-    setSaving(false);
-    if (ins.error) {
-      toast.error("Não foi possível salvar: " + ins.error.message);
-      return;
+    try {
+      const { error } = await supabase.from("content_blocks").delete().eq("page", page);
+      if (error) throw error;
+      await qc.invalidateQueries({ queryKey: ["blocks", page] });
+      setDraft(null);
+      setHistory([]);
+      setSel(null);
+      toast.success("Conteúdo original restaurado.");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Falha ao restaurar.");
+    } finally {
+      setSaving(false);
     }
-    await qc.invalidateQueries({ queryKey: ["blocks", page] });
-    setDraft(null);
-    setHistory([]);
-    toast.success("Página salva para todos os leitores");
-  };
-  const reset = () => {
-    if (confirm("Voltar ao conteúdo original desta página?")) apply(defaults());
   };
 
-  const latest = useRef({ undo, save, remove, sel, writing, dirty });
-  latest.current = { undo, save, remove, sel, writing, dirty };
+  const save = async () => {
+    if (!draft) return;
+    setSaving(true);
+    try {
+      const { error } = await supabase.from("content_blocks").upsert(
+        {
+          page,
+          blocks: draft as any,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "page" }
+      );
+      if (error) throw error;
+      await qc.invalidateQueries({ queryKey: ["blocks", page] });
+      setDraft(null);
+      setHistory([]);
+      toast.success("Alterações salvas!");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Falha ao salvar.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   useEffect(() => {
     if (!editMode) return;
     const down = (e: PointerEvent) => {
       const t = e.target as HTMLElement;
-      if (!t.closest(".bk") && !t.closest(".ed-tools") && !t.closest(".ed-bar") && !t.closest(".ed-modal"))
+      if (t.closest(".ed-tools") || t.closest(".ed-bar") || t.closest(".ed-grip") || t.closest(".ed-resize"))
+        return;
+      if (!t.closest(".bk")) {
         setSel(null);
+      }
     };
     const key = (e: KeyboardEvent) => {
-      const L = latest.current;
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
         e.preventDefault();
-        if (L.dirty) L.save();
-      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z" && !L.writing) {
+        undo();
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
         e.preventDefault();
-        L.undo();
-      } else if (e.key === "Delete" && L.sel && !L.writing) {
-        e.preventDefault();
-        L.remove(L.sel);
+        if (dirty) save();
       } else if (e.key === "Escape") {
         setSel(null);
       }
@@ -221,7 +233,7 @@ export function BlockPage({
       document.removeEventListener("pointerdown", down);
       document.removeEventListener("keydown", key);
     };
-  }, [editMode]);
+  }, [editMode, dirty, blocks, history]);
 
   const selected = blocks.find((b) => b.id === sel);
 
@@ -234,7 +246,7 @@ export function BlockPage({
           editing={editMode}
           selected={sel === b.id}
           writing={writing && sel === b.id}
-          over={dragOver === b.id}
+          dropPos={dragTarget?.id === b.id ? dragTarget.pos : null}
           onSelect={() => {
             if (!editMode) return;
             if (sel === b.id) setWriting(true);
@@ -245,11 +257,22 @@ export function BlockPage({
           onDragStart={() => {
             dragId.current = b.id;
           }}
-          onDragOver={() => setDragOver(b.id)}
+          onDragOver={(pos) => {
+            if (dragId.current && dragId.current !== b.id) {
+              setDragTarget({ id: b.id, pos });
+            }
+          }}
+          onDragLeave={() => {
+            if (dragTarget?.id === b.id) {
+              setDragTarget(null);
+            }
+          }}
           onDrop={() => {
-            if (dragId.current) moveTo(dragId.current, b.id);
+            if (dragId.current && dragTarget?.id === b.id) {
+              moveTo(dragId.current, b.id, dragTarget.pos);
+            }
             dragId.current = null;
-            setDragOver(null);
+            setDragTarget(null);
           }}
         />
       ))}
@@ -265,167 +288,123 @@ export function BlockPage({
           onAdd={(k) =>
             insertAfter(
               selected.id,
-              mk(
-                k === "text"
-                  ? { kind: "text", content: "Novo texto..." }
-                  : k === "sfx"
-                  ? { kind: "sfx", content: "BOOM!", align: "center", font: "manga" }
-                  : k === "quote"
-                  ? { kind: "quote", content: "Fala do personagem...", align: "center" }
-                  : { kind: "divider", align: "center" }
-              )
-            )
-          }
-          onAddImage={() => setPicker({ mode: "add", id: selected.id })}
-          onAddAudio={() =>
-            insertAfter(
-              selected.id,
               mk({
-                kind: "audio",
-                content: "Dublagem da Cena",
-                pos: "voice",
-                zoom: 100,
-                align: "center",
+                kind: k,
+                content:
+                  k === "text"
+                    ? "Novo parágrafo..."
+                    : k === "quote"
+                    ? "Nova fala..."
+                    : k === "sfx"
+                    ? "ZAN!"
+                    : "",
               })
             )
           }
-          onReplace={() => setPicker({ mode: "replace", id: selected.id })}
+          onAddImage={() => setPicker({ mode: "add", id: selected.id, type: "visual" })}
+          onAddAudio={() => setPicker({ mode: "add", id: selected.id, type: "audio" })}
+          onReplace={() =>
+            setPicker({
+              mode: "replace",
+              id: selected.id,
+              type: selected.kind === "audio" ? "audio" : "visual",
+            })
+          }
         />
       )}
 
-      {editMode && blocks.length === 0 && (
-        <div className="ed-empty">
-          <button onClick={() => { const b = mk({ kind: "text", content: "Novo texto..." }); apply([b]); setSel(b.id); }}>
-            <Type size={14} /> Adicionar texto aqui
-          </button>
-          <button onClick={() => { const b = mk({ kind: "sfx", content: "BOOM!", align: "center", font: "manga" }); apply([b]); setSel(b.id); }}>
-            <Zap size={14} /> Onomatopeia
-          </button>
-          <button onClick={() => { const b = mk({ kind: "quote", content: "Fala do personagem...", align: "center" }); apply([b]); setSel(b.id); }}>
-            <MessageCircle size={14} /> Balão
-          </button>
-          <button onClick={() => { const b = mk({ kind: "audio", content: "Dublagem da Cena", pos: "voice", align: "center" }); apply([b]); setSel(b.id); }}>
-            <Headphones size={14} /> Áudio / Dublagem
-          </button>
-        </div>
-      )}
-
-      {editMode && (dirty || sel || !className?.includes("bk-quiet")) && (blocks.length > 0 || dirty) && (
+      {editMode && (
         <div className="ed-bar">
-          <span>{dirty ? "Alterações não salvas" : "Clique para selecionar · clique de novo para editar"}</span>
-          <button onClick={undo} disabled={!history.length} title="Ctrl+Z">
-            <Undo2 size={15} /> Desfazer
-          </button>
-          <button onClick={reset}>
-            <RotateCcw size={15} /> Original
-          </button>
-          <button onClick={() => { setDraft(null); setHistory([]); }} disabled={!dirty}>
-            <X size={15} /> Descartar
-          </button>
-          <button className="ed-save" onClick={save} disabled={!dirty || saving} title="Ctrl+S">
-            <Save size={15} /> {saving ? "Salvando..." : "Salvar"}
-          </button>
+          <div className="ed-info">
+            <b>MODO EDIÇÃO</b>
+            <span>{dirty ? "✦ Alterações pendentes" : "Pronto para editar"}</span>
+          </div>
+          <div className="ed-actions">
+            <button
+              onClick={() => {
+                const b = mk({ kind: "text", content: "Novo texto..." });
+                apply([...blocks, b]);
+                setSel(b.id);
+              }}
+              title="Adicionar parágrafo no final"
+            >
+              <Plus size={15} /> Texto
+            </button>
+            <button
+              onClick={() => setPicker({ mode: "add", id: blocks[blocks.length - 1]?.id ?? "end", type: "visual" })}
+              title="Adicionar imagem ou vídeo"
+            >
+              <ImagePlus size={15} /> Imagem
+            </button>
+            <button
+              onClick={() => setPicker({ mode: "add", id: blocks[blocks.length - 1]?.id ?? "end", type: "audio" })}
+              title="Adicionar áudio ou dublagem"
+            >
+              <Headphones size={15} /> Áudio
+            </button>
+            <button onClick={undo} disabled={!history.length} title="Desfazer (Ctrl+Z)">
+              <Undo2 size={15} />
+            </button>
+            <button onClick={resetOriginal} disabled={saving} title="Restaurar conteúdo original">
+              <RotateCcw size={15} /> Original
+            </button>
+            <button className="ed-save" onClick={save} disabled={!dirty || saving} title="Salvar (Ctrl+S)">
+              <Save size={15} /> {saving ? "Salvando..." : "Salvar"}
+            </button>
+          </div>
         </div>
       )}
 
       {picker && (
         <MediaPicker
+          type={picker.type ?? "visual"}
           onClose={() => setPicker(null)}
-          onPick={(url, type: MediaType) => {
-            const kind: Block["kind"] = type === "audio" ? "audio" : type === "video" ? "video" : "image";
-            if (picker.mode === "replace") update(picker.id, { src: url, kind });
-            else insertAfter(picker.id, mk({ kind, src: url, content: type === "audio" ? "Trilha Sonora" : "" }));
+          onSelect={(url, kind, label) => {
+            if (picker.mode === "replace") {
+              if (picker.type === "audio") {
+                update(picker.id, {
+                  src: url,
+                  audioMode: kind === "bgm" ? "bgm" : "voice",
+                  label: label || undefined,
+                });
+              } else {
+                update(picker.id, { src: url, kind: kind === "video" ? "video" : "image" });
+              }
+            } else {
+              const prev = blocks.find((b) => b.id === picker.id);
+              if (picker.type === "audio") {
+                const b = mk({
+                  kind: "audio",
+                  src: url,
+                  audioMode: kind === "bgm" ? "bgm" : "voice",
+                  label: label || (kind === "bgm" ? "Trilha Sonora" : "Dublagem"),
+                  volume: 0.8,
+                });
+                if (prev) insertAfter(prev.id, b);
+                else apply([...blocks, b]);
+              } else {
+                const b = mk({
+                  kind: kind === "video" ? "video" : "image",
+                  src: url,
+                  frame: "straight",
+                  size: "md",
+                });
+                if (prev) insertAfter(prev.id, b);
+                else apply([...blocks, b]);
+              }
+            }
             setPicker(null);
           }}
         />
       )}
 
       {lightbox && (
-        <div className="bk-lightbox" onClick={() => setLightbox(null)}>
-          <img src={lightbox} alt="Arte ampliada" />
+        <div className="mg-lightbox" onClick={() => setLightbox(null)}>
+          <button className="mg-lightbox-close" onClick={() => setLightbox(null)}>
+            <X size={24} />
+          </button>
+          <img src={lightbox} alt="Arte expandida" onClick={(e) => e.stopPropagation()} />
         </div>
-      )}
-    </div>
-  );
-}
-
-function MangaAudioPlayer({ b, editing, onChange }: { b: Block; editing: boolean; onChange: (p: Partial<Block>) => void }) {
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const [playing, setPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-
-  const isBgm = b.pos === "bgm";
-  const vol = (b.zoom ?? 100) / 100;
-
-  useEffect(() => {
-    if (audioRef.current) audioRef.current.volume = vol;
-  }, [vol]);
-
-  const toggle = () => {
-    if (!audioRef.current || !b.src) return;
-    if (playing) {
-      audioRef.current.pause();
-      setPlaying(false);
-    } else {
-      audioRef.current.play().then(() => setPlaying(true)).catch(() => {});
-    }
-  };
-
-  const fmt = (s: number) => {
-    if (isNaN(s)) return "00:00";
-    const m = Math.floor(s / 60);
-    const sec = Math.floor(s % 60);
-    return `${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
-  };
-
-  return (
-    <div className={`mg-audio-wrap ${isBgm ? "is-bgm" : "is-voice"}`}>
-      {b.src && (
-        <audio
-          ref={audioRef}
-          src={b.src}
-          loop={isBgm}
-          onTimeUpdate={() => audioRef.current && setCurrentTime(audioRef.current.currentTime)}
-          onLoadedMetadata={() => audioRef.current && setDuration(audioRef.current.duration)}
-          onEnded={() => setPlaying(false)}
-        />
-      )}
-
-      <div className="mg-audio-inner">
-        <button type="button" className="mg-audio-play-btn" onClick={toggle} disabled={!b.src}>
-          {playing ? <Pause size={18} /> : <Play size={18} />}
-        </button>
-
-        <div className="mg-audio-info">
-          <div className="mg-audio-header">
-            <span className={`mg-audio-tag ${isBgm ? "tag-bgm" : "tag-voice"}`}>
-              {isBgm ? "♫ TRILHA SONORA" : "✦ DUBLAGEM"}
-            </span>
-            <span className="mg-audio-title">{b.content || (isBgm ? "Música de fundo" : "Voz da cena")}</span>
-            <span className="mg-audio-time">
-              {fmt(currentTime)} / {fmt(duration)}
-            </span>
-          </div>
-
-          <div
-            className="mg-audio-track"
-            onClick={(e) => {
-              if (!audioRef.current || !duration) return;
-              const rect = e.currentTarget.getBoundingClientRect();
-              const pct = (e.clientX - rect.left) / rect.width;
-              audioRef.current.currentTime = pct * duration;
-            }}
-          >
-            <div className="mg-audio-fill" style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }} />
-          </div>
-        </div>
-      </div>
-
-      {!b.src && editing && (
-        <p style={{ color: "var(--arcane)", fontSize: "11px", textAlign: "center", margin: "6px 0 0" }}>
-          Nenhum áudio selecionado. Clique no bloco e escolha "Trocar áudio" na barra.
-        </p>
       )}
     </div>
   );
@@ -436,29 +415,31 @@ function BlockView({
   editing,
   selected,
   writing,
-  over,
+  dropPos,
   onSelect,
   onOpen,
   onChange,
   onDragStart,
   onDragOver,
+  onDragLeave,
   onDrop,
 }: {
   b: Block;
   editing: boolean;
   selected: boolean;
   writing: boolean;
-  over: boolean;
+  dropPos: "top" | "bottom" | null;
   onSelect: () => void;
   onOpen: (src: string) => void;
   onChange: (p: Partial<Block>) => void;
   onDragStart: () => void;
-  onDragOver: () => void;
+  onDragOver: (pos: "top" | "bottom") => void;
+  onDragLeave: () => void;
   onDrop: () => void;
 }) {
   const cls = `bk bk-${b.kind} bk-${b.align} bk-size-${b.size} bk-c-${b.color} bk-f-${b.font} bk-fr-${b.frame} ${
     selected ? "sel" : ""
-  } ${over ? "drop" : ""}`;
+  } ${dropPos ? `drop-${dropPos}` : ""}`;
   const style: CSSProperties =
     b.width < 100
       ? {
@@ -479,7 +460,14 @@ function BlockView({
     ? {
         onDragOver: (e: React.DragEvent) => {
           e.preventDefault();
-          onDragOver();
+          const rect = e.currentTarget.getBoundingClientRect();
+          const mid = rect.top + rect.height / 2;
+          onDragOver(e.clientY < mid ? "top" : "bottom");
+        },
+        onDragLeave: (e: React.DragEvent) => {
+          if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+            onDragLeave();
+          }
         },
         onDrop: (e: React.DragEvent) => {
           e.preventDefault();
@@ -488,21 +476,23 @@ function BlockView({
       }
     : {};
 
-  const handles =
-    editing && selected ? (
-      <>
-        <span
-          className="ed-grip"
-          draggable
-          title="Arraste para mudar a posição"
-          onDragStart={(e) => {
-            e.dataTransfer.effectAllowed = "move";
-            e.dataTransfer.setData("text/plain", b.id);
-            onDragStart();
-          }}
-        >
-          <GripVertical size={16} />
-        </span>
+  const handles = editing ? (
+    <>
+      <span
+        className="ed-grip"
+        draggable
+        title="Clique e arraste para reordenar o bloco na cena"
+        onDragStart={(e) => {
+          e.stopPropagation();
+          e.dataTransfer.effectAllowed = "move";
+          e.dataTransfer.setData("text/plain", b.id);
+          onDragStart();
+        }}
+      >
+        <GripVertical size={14} />
+        <span className="ed-grip-text">MOVER</span>
+      </span>
+      {selected && (
         <span
           className="ed-resize"
           title="Arraste para mudar a largura"
@@ -529,8 +519,9 @@ function BlockView({
             window.addEventListener("pointerup", up);
           }}
         />
-      </>
-    ) : null;
+      )}
+    </>
+  ) : null;
 
   if (b.kind === "divider") {
     return (
@@ -578,65 +569,76 @@ function BlockView({
       const [nx, ny] = calc(e);
       const moved = Math.abs(e.clientX - dragRef.current.x) + Math.abs(e.clientY - dragRef.current.y) > 3;
       dragRef.current = null;
-      if (moved) onChange({ pos: `${Math.round(nx)}% ${Math.round(ny)}%` });
+      if (moved) onChange({ pos: `${nx}% ${ny}%` });
     };
-    const ptr = editing ? { onPointerDown: onDown, onPointerMove: onMove, onPointerUp: onUp } : {};
+
     return (
-      <figure ref={hostRef as React.RefObject<HTMLElement>} className={cls} style={style} onClick={onSelect} {...dnd}>
+      <figure
+        ref={hostRef as React.RefObject<HTMLElement>}
+        className={cls}
+        style={style}
+        onClick={onSelect}
+        onDoubleClick={() => !editing && b.kind === "image" && onOpen(b.src)}
+        {...dnd}
+      >
         {handles}
-        <div className={`mg-panel bk-frame ${cropped ? "" : "bk-full"}`}>
+        <div className="bk-frame">
           {b.kind === "video" ? (
             <video
-              src={b.src ?? ""}
+              src={b.src}
               autoPlay
-              muted
               loop
+              muted
               playsInline
-              style={{ objectPosition: b.pos, cursor: selected ? "move" : undefined }}
-              {...ptr}
+              style={{ objectPosition: b.pos }}
+              onPointerDown={onDown}
+              onPointerMove={onMove}
+              onPointerUp={onUp}
+              onPointerCancel={onUp}
             />
-          ) : !cropped ? (
-            <img
-              src={b.src ?? ""}
-              alt={b.content || "Arte de THE ELDER"}
-              loading="lazy"
-              draggable={false}
-              onClick={() => onOpen(b.src ?? "")}
-            />
-          ) : (
+          ) : cropped ? (
             <div
               className="bk-crop"
-              role="img"
-              aria-label={b.content || "Recorte de arte"}
               style={{
                 backgroundImage: `url(${b.src})`,
                 backgroundPosition: b.pos,
                 backgroundSize: `${b.zoom}%`,
-                cursor: selected ? "move" : "zoom-in",
-                touchAction: selected ? "none" : undefined,
               }}
-              onClick={() => onOpen(b.src ?? "")}
-              {...ptr}
+              onPointerDown={onDown}
+              onPointerMove={onMove}
+              onPointerUp={onUp}
+              onPointerCancel={onUp}
+            />
+          ) : (
+            <img
+              src={b.src}
+              alt={b.caption || "Cena"}
+              loading="lazy"
+              draggable={false}
+              style={{ objectPosition: b.pos }}
+              onPointerDown={onDown}
+              onPointerMove={onMove}
+              onPointerUp={onUp}
+              onPointerCancel={onUp}
             />
           )}
         </div>
-        {(b.content || (editing && selected)) && (
+        {(b.caption || (editing && selected)) && (
           <figcaption
-            className="mg-caption"
-            contentEditable={writing}
+            contentEditable={editing}
             suppressContentEditableWarning
-            onBlur={(e) => e.currentTarget.textContent !== b.content && onChange({ content: e.currentTarget.textContent ?? "" })}
+            onBlur={(e) => onChange({ caption: e.currentTarget.innerText })}
           >
-            {b.content}
+            {b.caption || (editing ? "Legenda..." : "")}
           </figcaption>
         )}
       </figure>
     );
   }
 
-  const Tag = b.kind === "quote" ? "blockquote" : "div";
+  const Tag = b.kind === "onomatopoeia" ? "div" : "p";
   return (
-    <Tag ref={hostRef as never} className={cls} style={style} onClick={onSelect} {...dnd}>
+    <Tag ref={hostRef as React.RefObject<HTMLParagraphElement>} className={cls} style={style} onClick={onSelect} {...dnd}>
       {handles}
       <div
         className={b.kind === "quote" ? "mg-bubble" : b.kind === "sfx" ? "mg-sfx bk-sfx-t" : "bk-text"}
@@ -710,43 +712,10 @@ function Toolbar({
             <Replace size={15} /> Trocar Áudio
           </button>
           <button
-            title="Alternar entre Dublagem e Trilha"
-            className="on"
-            onClick={() => onChange({ pos: b.pos === "bgm" ? "voice" : "bgm" })}
+            title="Alternar modo de áudio"
+            onClick={() => onChange({ audioMode: b.audioMode === "bgm" ? "voice" : "bgm" })}
           >
-            {b.pos === "bgm" ? "♫ Mudar p/ Dublagem" : "✦ Mudar p/ Trilha"}
-          </button>
-          <label className="ed-zoom" title="Volume">
-            <Volume2 size={14} />
-            <input
-              type="range"
-              min={10}
-              max={100}
-              step={5}
-              value={b.zoom ?? 100}
-              onChange={(e) => onChange({ zoom: Number(e.target.value) })}
-            />
-          </label>
-        </>
-      )}
-
-      {!media && !isAudio && b.kind !== "divider" && (
-        <>
-          <button title="Negrito" className={b.bold ? "on" : ""} onClick={() => onChange({ bold: !b.bold })}>
-            <Bold size={15} />
-          </button>
-          <button title="Itálico" className={b.italic ? "on" : ""} onClick={() => onChange({ italic: !b.italic })}>
-            <Italic size={15} />
-          </button>
-          <button title="Tamanho" onClick={() => onChange({ size: next(sizes, b.size) })}>
-            <Type size={15} /> {b.size.toUpperCase()}
-          </button>
-          <button title="Cor do texto" onClick={() => onChange({ color: next(colors, b.color) })}>
-            <Palette size={15} />
-            <span className={`ed-dot bk-c-${b.color}`} />
-          </button>
-          <button title="Fonte" onClick={() => onChange({ font: next(fonts, b.font) })}>
-            Aa {label[b.font]}
+            {b.audioMode === "bgm" ? "♫ Trilha Sonora" : "✦ Dublagem"}
           </button>
         </>
       )}
@@ -754,50 +723,92 @@ function Toolbar({
       {media && (
         <>
           <button title="Trocar mídia" onClick={onReplace}>
-            <Replace size={15} />
+            <Replace size={15} /> Trocar
+          </button>
+          <button
+            title="Mudar tamanho do quadro"
+            onClick={() => onChange({ size: next(sizes, b.size) })}
+          >
+            Tam: {b.size.toUpperCase()}
+          </button>
+          <button
+            title="Estilo da borda"
+            onClick={() => onChange({ frame: next(frames, b.frame) })}
+          >
+            <Square size={14} /> {label[b.frame]}
           </button>
           {b.kind === "image" && (
-            <label className="ed-zoom" title="Zoom (100 = imagem inteira)">
-              <Move size={14} />
+            <label className="ed-zoom" title="Aproximar e enquadrar">
+              <span>Zoom</span>
               <input
                 type="range"
-                min={100}
-                max={500}
-                step={10}
+                min="100"
+                max="300"
+                step="10"
                 value={b.zoom}
-                onChange={(e) => onChange({ zoom: Number(e.target.value) })}
+                onChange={(e) => onChange({ zoom: parseInt(e.target.value) || 100 })}
               />
+              <small>{b.zoom}%</small>
             </label>
           )}
-          <button title="Quadro" onClick={() => onChange({ frame: next(frames, b.frame) })}>
-            <Square size={14} /> {label[b.frame]}
+        </>
+      )}
+
+      {!media && !isAudio && b.kind !== "divider" && (
+        <>
+          <button
+            className={b.bold ? "on" : ""}
+            title="Negrito"
+            onClick={() => onChange({ bold: !b.bold })}
+          >
+            <Bold size={15} />
+          </button>
+          <button
+            className={b.italic ? "on" : ""}
+            title="Itálico"
+            onClick={() => onChange({ italic: !b.italic })}
+          >
+            <Italic size={15} />
+          </button>
+          <button
+            title="Fonte"
+            onClick={() => onChange({ font: next(fonts, b.font) })}
+          >
+            <Type size={15} /> {label[b.font]}
+          </button>
+          <button
+            title="Cor temática"
+            onClick={() => onChange({ color: next(colors, b.color) })}
+          >
+            <Palette size={15} /> <span className={`ed-dot bk-c-${b.color}`} />
           </button>
         </>
       )}
 
-      <i />
-      <button title="Esquerda" className={b.align === "left" ? "on" : ""} onClick={() => onChange({ align: "left" })}>
+      <button
+        className={b.align === "left" ? "on" : ""}
+        title="Alinhar à esquerda"
+        onClick={() => onChange({ align: "left" })}
+      >
         <AlignLeft size={15} />
       </button>
-      <button title="Centro" className={b.align === "center" ? "on" : ""} onClick={() => onChange({ align: "center" })}>
+      <button
+        className={b.align === "center" ? "on" : ""}
+        title="Centralizar"
+        onClick={() => onChange({ align: "center" })}
+      >
         <AlignCenter size={15} />
       </button>
-      <button title="Direita" className={b.align === "right" ? "on" : ""} onClick={() => onChange({ align: "right" })}>
+      <button
+        className={b.align === "right" ? "on" : ""}
+        title="Alinhar à direita"
+        onClick={() => onChange({ align: "right" })}
+      >
         <AlignRight size={15} />
       </button>
-      <label className="ed-zoom" title="Largura">
-        <span>↔</span>
-        <input
-          type="range"
-          min={25}
-          max={100}
-          step={5}
-          value={b.width}
-          onChange={(e) => onChange({ width: Number(e.target.value) })}
-        />
-      </label>
 
-      <i />
+      <span className="ed-sep" />
+
       <button title="Subir" onClick={onUp}>
         <ArrowUp size={15} />
       </button>
@@ -807,30 +818,155 @@ function Toolbar({
       <button title="Duplicar" onClick={onDup}>
         <Copy size={15} />
       </button>
-      <button title="Apagar (Delete)" onClick={onDel}>
+      <button className="ed-del" title="Excluir" onClick={onDel}>
         <Trash2 size={15} />
       </button>
 
-      <i />
-      <button title="Adicionar texto" onClick={() => onAdd("text")}>
-        <Plus size={13} />
-        <Type size={14} />
+      <span className="ed-sep" />
+
+      <button title="Inserir texto abaixo" onClick={() => onAdd("text")}>
+        <Plus size={14} /> Texto
       </button>
-      <button title="Adicionar imagem" onClick={onAddImage}>
-        <ImagePlus size={15} />
+      <button title="Inserir onomatopeia" onClick={() => onAdd("sfx")}>
+        <Zap size={14} /> SFX
       </button>
-      <button title="Adicionar Áudio / Dublagem" onClick={onAddAudio}>
-        <Headphones size={15} />
+      <button title="Inserir balão" onClick={() => onAdd("quote")}>
+        <MessageCircle size={14} /> Balão
       </button>
-      <button title="Adicionar balão de fala" onClick={() => onAdd("quote")}>
-        <MessageCircle size={15} />
+      <button title="Inserir divisor de cena" onClick={() => onAdd("divider")}>
+        <Minus size={14} /> Linha
       </button>
-      <button title="Adicionar onomatopeia" onClick={() => onAdd("sfx")}>
-        <Zap size={15} />
+      <button title="Inserir imagem abaixo" onClick={onAddImage}>
+        <ImagePlus size={14} /> Imagem
       </button>
-      <button title="Adicionar divisor" onClick={() => onAdd("divider")}>
-        <Minus size={15} />
+      <button title="Inserir áudio abaixo" onClick={onAddAudio}>
+        <Headphones size={14} /> Áudio
       </button>
+    </div>
+  );
+}
+
+function MangaAudioPlayer({
+  b,
+  editing,
+  onChange,
+}: {
+  b: Block;
+  editing: boolean;
+  onChange: (p: Partial<Block>) => void;
+}) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [playing, setPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [muted, setMuted] = useState(false);
+
+  const isBgm = b.audioMode === "bgm";
+  const defaultLabel = isBgm ? "Trilha Sonora Original" : "Dublagem da Cena";
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.volume = b.volume ?? 0.8;
+  }, [b.volume]);
+
+  const toggle = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (playing) {
+      audio.pause();
+      setPlaying(false);
+    } else {
+      audio.play().then(() => setPlaying(true)).catch(() => {});
+    }
+  };
+
+  const onTimeUpdate = () => {
+    const audio = audioRef.current;
+    if (!audio || !audio.duration) return;
+    setProgress((audio.currentTime / audio.duration) * 100);
+  };
+
+  const onLoadedMetadata = () => {
+    const audio = audioRef.current;
+    if (audio) setDuration(audio.duration);
+  };
+
+  const onSeek = (e: React.MouseEvent<HTMLDivElement>) => {
+    const audio = audioRef.current;
+    if (!audio || !duration) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    audio.currentTime = pct * duration;
+    setProgress(pct * 100);
+  };
+
+  const formatTime = (secs: number) => {
+    const m = Math.floor(secs / 60);
+    const s = Math.floor(secs % 60);
+    return `${m}:${s.toString().padStart(2, "0")}`;
+  };
+
+  return (
+    <div className={`mg-audio-wrap ${isBgm ? "is-bgm" : "is-voice"}`}>
+      <audio
+        ref={audioRef}
+        src={b.src}
+        loop={isBgm}
+        onTimeUpdate={onTimeUpdate}
+        onLoadedMetadata={onLoadedMetadata}
+        onEnded={() => setPlaying(false)}
+      />
+      <div className="mg-audio-inner">
+        <button
+          className={`mg-audio-play ${playing ? "on" : ""}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            toggle();
+          }}
+          title={playing ? "Pausar" : "Ouvir"}
+        >
+          {playing ? <Pause size={18} /> : <Play size={18} />}
+        </button>
+
+        <div className="mg-audio-meta">
+          <div className="mg-audio-header">
+            <span className="mg-audio-badge">
+              {isBgm ? "♫ TRILHA SONORA" : "✦ DUBLAGEM"}
+            </span>
+            <span
+              className="mg-audio-title"
+              contentEditable={editing}
+              suppressContentEditableWarning
+              onBlur={(e) => onChange({ label: e.currentTarget.innerText })}
+            >
+              {b.label || defaultLabel}
+            </span>
+          </div>
+
+          <div className="mg-audio-track" onClick={onSeek}>
+            <div className="mg-audio-fill" style={{ width: `${progress}%` }} />
+          </div>
+
+          <div className="mg-audio-footer">
+            <small>
+              {formatTime((duration * progress) / 100)} / {formatTime(duration)}
+            </small>
+            <button
+              className="mg-audio-vol"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (audioRef.current) {
+                  audioRef.current.muted = !muted;
+                  setMuted(!muted);
+                }
+              }}
+            >
+              {muted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
