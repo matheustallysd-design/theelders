@@ -50,7 +50,6 @@ export const mk = (
   p: Partial<Block> & { kind: BlockKind }
 ): Block => ({
   id: newId(),
-  kind: p.kind,
   content: "",
   src: null,
   pos: p.kind === "audio" ? "voice" : "50% 50%",
@@ -63,7 +62,7 @@ export const mk = (
   color: "default",
   font: "body",
   frame: "straight",
-  audioMode: p.kind === "audio" ? "voice" : undefined,
+  ...(p.kind === "audio" ? { audioMode: "voice" as const } : {}),
   volume: 0.8,
   ...p,
 });
