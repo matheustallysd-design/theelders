@@ -261,3 +261,8 @@
 .ed-empty{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:14px;margin:12px auto;max-width:1100px;border:2px dashed var(--arcane,#3fd6e8);border-radius:6px}
 .ed-empty button{display:inline-flex;align-items:center;gap:6px;background:var(--ink,#0b0a0d);color:#f4ecd8;border:1px solid var(--gold,#e8b84a);border-radius:4px;padding:6px 10px;cursor:pointer;font:600 13px system-ui,sans-serif}
 .bk-home{max-width:1100px;margin:0 auto;padding:0 20px}
+/* ---- espaço em branco e botão com link ---- */
+.bk-spacer{position:relative}
+.editing .bk-spacer{outline:1px dashed rgba(232,184,74,.4)}
+.bk-spacer-label{position:absolute;inset:0;display:grid;place-items:center;font-size:10px;letter-spacing:2px;color:var(--gold);opacity:.7}
+.bk-button{display:inline-flex;text-decoration:none}

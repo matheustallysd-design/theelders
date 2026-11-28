@@ -31,6 +31,8 @@ import {
   Pause,
   Volume2,
   VolumeX,
+  Space,
+  Link2,
 } from "lucide-react";
 import { blockToRow, rowToBlock, type BlockRow } from "@/lib/blockRows";
 import { supabase } from "@/integrations/supabase/client";
@@ -302,7 +304,10 @@ export function BlockPage({
                     ? "Nova fala..."
                     : k === "sfx"
                     ? "ZAN!"
+                    : k === "button"
+                    ? "COMEÇAR A LER"
                     : "",
+                ...(k === "button" ? { src: "/capitulos", align: "center" as const } : {}),
               })
             )
           }
@@ -537,6 +542,31 @@ function BlockView({
     );
   }
 
+  if (b.kind === "spacer") {
+    const h = { sm: 24, md: 56, lg: 120 }[b.size];
+    return (
+      <div ref={hostRef as React.RefObject<HTMLDivElement>} className={`${cls} bk-spacer`} style={{ ...style, height: h }} onClick={onSelect} {...dnd}>
+        {handles}
+        {editing && <span className="bk-spacer-label">espaço ({h}px)</span>}
+      </div>
+    );
+  }
+
+  if (b.kind === "button") {
+    const href = b.src || "/";
+    const ext = /^https?:/i.test(href);
+    return (
+      <div ref={hostRef as React.RefObject<HTMLDivElement>} className={cls} style={{ ...style, textAlign: b.align }} onClick={onSelect} {...dnd}>
+        {handles}
+        <a className="primary-btn bk-button" href={href} target={ext ? "_blank" : undefined} rel={ext ? "noreferrer" : undefined}
+          onClick={(e) => { if (editing) e.preventDefault(); }}>
+          <span contentEditable={writing} suppressContentEditableWarning
+            onBlur={(e) => { const v = e.currentTarget.innerText; if (v !== b.content) onChange({ content: v }); }}>{b.content}</span>
+        </a>
+      </div>
+    );
+  }
+
   if (b.kind === "audio") {
     return (
       <div ref={hostRef as React.RefObject<HTMLDivElement>} className={`${cls} bk-audio-block`} style={style} onClick={onSelect} {...dnd}>
@@ -695,7 +725,7 @@ function Toolbar({
   onDown: () => void;
   onDup: () => void;
   onDel: () => void;
-  onAdd: (k: "text" | "sfx" | "quote" | "divider") => void;
+  onAdd: (k: "text" | "sfx" | "quote" | "divider" | "spacer" | "button") => void;
   onAddImage: () => void;
   onAddAudio: () => void;
   onReplace: () => void;
@@ -703,6 +733,8 @@ function Toolbar({
   const media = b.kind === "image" || b.kind === "video";
   const isAudio = b.kind === "audio";
   const sizes: Block["size"][] = ["sm", "md", "lg"];
+  const spacer = b.kind === "spacer";
+  const isBtn = b.kind === "button";
 
   return (
     <div
@@ -723,6 +755,20 @@ function Toolbar({
             {b.audioMode === "bgm" ? "♫ Trilha Sonora" : "✦ Dublagem"}
           </button>
         </>
+      )}
+
+      {spacer && (
+        <button title="Altura do espaço" onClick={() => onChange({ size: next(sizes, b.size) })}>
+          Altura: {b.size.toUpperCase()}
+        </button>
+      )}
+      {isBtn && (
+        <button title="Mudar o link do botão" onClick={() => {
+          const v = prompt("Link do botão (ex.: /capitulos ou https://...)", b.src ?? "/");
+          if (v !== null && v.trim()) onChange({ src: v.trim() });
+        }}>
+          <Link2 size={15} /> Link: {b.src}
+        </button>
       )}
 
       {media && (
@@ -759,7 +805,7 @@ function Toolbar({
         </>
       )}
 
-      {!media && !isAudio && b.kind !== "divider" && (
+      {!media && !isAudio && !spacer && !isBtn && b.kind !== "divider" && (
         <>
           <button
             className={b.bold ? "on" : ""}
@@ -840,6 +886,12 @@ function Toolbar({
       </button>
       <button title="Inserir divisor de cena" onClick={() => onAdd("divider")}>
         <Minus size={14} /> Linha
+      </button>
+      <button title="Inserir espaço em branco" onClick={() => onAdd("spacer")}>
+        <Space size={14} /> Espaço
+      </button>
+      <button title="Inserir botão com link" onClick={() => onAdd("button")}>
+        <Link2 size={14} /> Botão
       </button>
       <button title="Inserir imagem abaixo" onClick={onAddImage}>
         <ImagePlus size={14} /> Imagem

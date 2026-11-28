@@ -1,3 +1,4 @@
+import { EText } from "@/components/Editable";
 import { createFileRoute } from "@tanstack/react-router";
 import { beasts } from "@/content/bestiary";
 import { EntryCard } from "@/components/Entries";
@@ -18,9 +19,9 @@ export const Route = createFileRoute("/bestiario/")({
 function Bestiary() {
   return (
     <main className="content-page mg-page" style={{ ["--page-art" as string]: `url(${media.besta})` }}>
-      <div className="section-kicker">ARQUIVO DO MUNDO / 03</div>
-      <h1>O que vive<br /><em>nas profundezas.</em></h1>
-      <p className="page-lead">Registros das criaturas encontradas por Suzue no labirinto.</p>
+      <div className="section-kicker"><EText id="best-kicker" text="ARQUIVO DO MUNDO / 03" /></div>
+      <h1><EText id="best-t1" text="O que vive" /><br /><em><EText id="best-t2" text="nas profundezas." /></em></h1>
+      <p className="page-lead"><EText id="best-lead" text="Registros das criaturas encontradas por Suzue no labirinto." /></p>
       <div className="mg-grid">{beasts.map((b) => <EntryCard key={b.slug} e={b} kind="bestiario" />)}</div>
     </main>
   );

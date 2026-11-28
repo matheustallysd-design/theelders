@@ -1,3 +1,4 @@
+import { EText } from "@/components/Editable";
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -63,8 +64,8 @@ function Reviews() {
 
   return (
     <main className="content-page rv">
-      <div className="section-kicker">VOZ DOS LEITORES</div>
-      <h1>Avaliações de <em>THE ELDER</em></h1>
+      <div className="section-kicker"><EText id="rv-kicker" text="VOZ DOS LEITORES" /></div>
+      <h1><EText id="rv-t1" text="Avaliações de" /> <em><EText id="rv-t2" text="THE ELDER" /></em></h1>
       <div className="rv-summary"><b>{avg ? avg.toFixed(1) : "—"}</b><Stars value={Math.round(avg)} /><span>{visible.length} avaliação{visible.length === 1 ? "" : "ões"}</span></div>
 
       {!user ? <p className="page-lead"><Link to="/auth" className="primary-btn">ENTRAR PARA AVALIAR</Link></p>

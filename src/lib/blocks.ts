@@ -10,7 +10,9 @@ export type BlockKind =
   | "sfx"
   | "quote"
   | "divider"
-  | "audio";
+  | "audio"
+  | "spacer"
+  | "button";
 
 export type Block = {
   id: string;

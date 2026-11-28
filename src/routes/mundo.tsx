@@ -1,3 +1,4 @@
+import { EText } from "@/components/Editable";
 import { createFileRoute } from "@tanstack/react-router";
 import { media } from "@/content/media";
 import { BlockPage } from "@/components/BlockPage";
@@ -17,7 +18,7 @@ export const Route = createFileRoute("/mundo")({
 
 function World() {
   return (
-    <main className="content-page mg-page" style={{ ["--page-art" as string]: `url(${media.capa})` }}><div className="section-kicker">ARQUIVO DO MUNDO / 01</div><h1>O que resta<br /><em>da Era Perdida?</em></h1><p className="page-lead">Registros, lendas e fragmentos de um mundo que mudou depois da Guerra Divina.</p>
+    <main className="content-page mg-page" style={{ ["--page-art" as string]: `url(${media.capa})` }}><div className="section-kicker"><EText id="mundo-kicker" text="ARQUIVO DO MUNDO / 01" /></div><h1><EText id="mundo-t1" text="O que resta" /><br /><em><EText id="mundo-t2" text="da Era Perdida?" /></em></h1><p className="page-lead"><EText id="mundo-lead" text="Registros, lendas e fragmentos de um mundo que mudou depois da Guerra Divina." /></p>
       <BlockPage page="mundo" defaults={worldDefaults} className="bk-world" />
     </main>
   );

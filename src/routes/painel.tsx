@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import { Shield, ShieldOff, Upload, BookOpen, Users, Skull, Globe, Image as ImageIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -22,12 +23,19 @@ export const Route = createFileRoute("/painel")({
   component: Painel,
 });
 
+const SLOT_AREAS: [string, string][] = [["footer", "Rodapé"], ["card-", "Cartão"], ["entry-", "Ficha"], ["cap-", "Capítulos"], ["mundo", "Arquivo do Mundo"], ["pers", "Personagens"], ["best", "Bestiário"], ["rv-", "Avaliações"]];
+function slotLabel(id: string) {
+  const area = SLOT_AREAS.find(([p]) => id.startsWith(p))?.[1] ?? "Página inicial";
+  return `${area} · ${id}`;
+}
+
 type Person = { id: string; email: string | null; admin: boolean };
 
 function Painel() {
   const { user, isAdmin, loading, setEditMode } = useAuth();
   const [people, setPeople] = useState<Person[]>([]);
   const [uploads, setUploads] = useState<{ name: string; url: string; video: boolean }[]>([]);
+  const qc = useQueryClient();
   const [edited, setEdited] = useState<Set<string>>(new Set());
 
   const load = async () => {
@@ -58,7 +66,7 @@ function Painel() {
   const resetPage = async (page: string) => {
     if (!confirm("Voltar esta página ao conteúdo original?")) return;
     const r = await supabase.from("content_blocks").delete().eq("page", page);
-    if (r.error) toast.error(r.error.message); else { toast.success("Página restaurada"); load(); }
+    if (r.error) toast.error(r.error.message); else { toast.success("Página restaurada"); qc.invalidateQueries(); load(); }
   };
   const onFile = async (f?: File) => { if (!f) return; try { await uploadMedia(f); toast.success("Mídia enviada"); load(); } catch (e) { toast.error((e as Error).message); } };
 
@@ -82,6 +90,11 @@ function Painel() {
           {beasts.map((c) => <Row key={c.slug} page={`entry-${c.slug}`} label={c.name} link={<Link to="/bestiario/$slug" params={{ slug: c.slug }} onClick={edit}>Editar</Link>} />)}
         </ul><h2><Globe size={18} /> Arquivo do Mundo</h2><ul>
           <Row page="mundo" label="Arquivo do Mundo" link={<Link to="/mundo" onClick={edit}>Editar</Link>} />
+        </ul><h2><Globe size={18} /> Página inicial</h2><ul>
+          {["home-a", "home-b", "home-c"].map((pg, i) => <Row key={pg} page={pg} label={`Blocos extras ${i + 1}`} link={<Link to="/" onClick={edit}>Editar</Link>} />)}
+        </ul><h2><ImageIcon size={18} /> Textos e imagens soltos</h2><ul>
+          {[...edited].filter((pg) => pg.startsWith("slot-")).sort().map((pg) => <Row key={pg} page={pg} label={slotLabel(pg.slice(5))} link={null} />)}
+          {![...edited].some((pg) => pg.startsWith("slot-")) && <li className="pn-row"><span>Nenhum texto ou imagem solto foi editado.</span></li>}
         </ul></section>
         <section className="pn-card"><h2><Shield size={18} /> Contas</h2><ul>
           {people.map((p) => <li key={p.id} className="pn-row"><span>{p.email}</span>{p.admin && <em>admin</em>}
