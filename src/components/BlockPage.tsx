@@ -32,6 +32,7 @@ import {
   Volume2,
   VolumeX,
 } from "lucide-react";
+import { blockToRow, rowToBlock, type BlockRow } from "@/lib/blockRows";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { mk, type Block } from "@/lib/blocks";
@@ -64,30 +65,12 @@ function useReveal() {
   return ref;
 }
 
-/**
- * A tabela content_blocks guarda um registro por página.
- * A coluna `blocks` contém o array completo de blocos em JSONB.
- */
-async function fetchBlocks(page: string): Promise<Block[]> {
-  const { data, error } = await supabase
-    .from("content_blocks")
-    .select("blocks")
-    .eq("page", page)
-    .maybeSingle();
-
-  if (error) {
-    console.error("Erro ao carregar os blocos da página:", error);
-    throw error;
-  }
-
-  if (!data?.blocks) return [];
-  if (!Array.isArray(data.blocks)) {
-    throw new Error(
-      `O conteúdo salvo da página "${page}" está em formato inválido.`
-    );
-  }
-
-  return data.blocks as Block[];
+/** A tabela content_blocks guarda um registro por bloco, em ordem pela coluna position. */
+async function fetchBlocks(page: string): Promise<Block[] | null> {
+  const { data, error } = await supabase.from("content_blocks").select("*").eq("page", page).order("position");
+  if (error) { console.error("Erro ao carregar os blocos da página:", error); throw error; }
+  if (!data?.length) return null;
+  return data.map((r) => rowToBlock(r as BlockRow));
 }
 
 export function BlockPage({
@@ -207,17 +190,10 @@ export function BlockPage({
     setSaving(true);
 
     try {
-      const { error } = await supabase
-        .from("content_blocks")
-        .upsert(
-          {
-            page,
-            blocks: snapshot as any,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: "page" }
-        );
-
+      const del = await supabase.from("content_blocks").delete().eq("page", page);
+      if (del.error) throw del.error;
+      const rows = snapshot.map((b, i) => blockToRow(b, page, i));
+      const { error } = rows.length ? await supabase.from("content_blocks").insert(rows as never) : { error: null };
       if (error) throw error;
 
       await qc.invalidateQueries({ queryKey: ["blocks", page] });
