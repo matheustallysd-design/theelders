@@ -43,6 +43,13 @@
       "when": 1795737890472,
       "tag": "0005_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1795857648883,
+      "tag": "0006_lock_review_moderation_and_has_role",
+      "breakpoints": true
     }
   ]
 }
