@@ -141,7 +141,7 @@ function ImgEditor({ pos, st, onSave }: { pos: string; st: SlotStyle; onSave: (p
         </div>
         {live && <span className="ed-img-pos">{live}</span>}
       </div>
-      {picker && <MediaPicker onClose={() => setPicker(false)} onPick={(url, v) => { setPicker(false); onSave(pos, url, v); }} />}
+      {picker && <MediaPicker onClose={() => setPicker(false)} onPick={(url, v) => { setPicker(false); onSave(pos, url, v === "video"); }} />}
     </>
   );
 }

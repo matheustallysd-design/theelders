@@ -641,7 +641,7 @@ function BlockView({
     );
   }
 
-  const Tag = b.kind === "onomatopoeia" ? "div" : "p";
+  const Tag = b.kind === "sfx" ? "div" : "p";
   return (
     <Tag ref={hostRef as React.RefObject<HTMLParagraphElement>} className={cls} style={style} onClick={onSelect} {...dnd}>
       {handles}
@@ -916,7 +916,7 @@ function MangaAudioPlayer({
     <div className={`mg-audio-wrap ${isBgm ? "is-bgm" : "is-voice"}`}>
       <audio
         ref={audioRef}
-        src={b.src}
+        src={b.src ?? undefined}
         loop={isBgm}
         onTimeUpdate={onTimeUpdate}
         onLoadedMetadata={onLoadedMetadata}
