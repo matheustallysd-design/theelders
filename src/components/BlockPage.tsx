@@ -95,7 +95,7 @@ export function BlockPage({
   const [writing, setWriting] = useState(false);
   const [dragTarget, setDragTarget] = useState<{ id: string; pos: "top" | "bottom" } | null>(null);
   const dragId = useRef<string | null>(null);
-  const [picker, setPicker] = useState<null | { mode: "replace" | "add"; id: string; type?: MediaType }>(null);
+  const [picker, setPicker] = useState<null | { mode: "replace" | "add"; id: string; type?: MediaType | "visual" }>(null);
   const [lightbox, setLightbox] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const ref = useReveal();
@@ -370,7 +370,7 @@ export function BlockPage({
                 update(picker.id, {
                   src: url,
                   audioMode: kind === "bgm" ? "bgm" : "voice",
-                  label: label || undefined,
+                  ...(label ? { label } : {}),
                 });
               } else {
                 update(picker.id, { src: url, kind: kind === "video" ? "video" : "image" });
@@ -583,14 +583,14 @@ function BlockView({
         className={cls}
         style={style}
         onClick={onSelect}
-        onDoubleClick={() => !editing && b.kind === "image" && onOpen(b.src)}
+        onDoubleClick={() => !editing && b.kind === "image" && b.src && onOpen(b.src)}
         {...dnd}
       >
         {handles}
         <div className="bk-frame">
           {b.kind === "video" ? (
             <video
-              src={b.src}
+              src={b.src ?? undefined}
               autoPlay
               loop
               muted
@@ -616,7 +616,7 @@ function BlockView({
             />
           ) : (
             <img
-              src={b.src}
+              src={b.src ?? undefined}
               alt={b.caption || "Cena"}
               loading="lazy"
               draggable={false}
